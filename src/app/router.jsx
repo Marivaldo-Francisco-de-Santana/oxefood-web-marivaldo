@@ -8,10 +8,14 @@ import Home from "../features/home/page/Home";
 import ProdutoPage from "../features/produto/page/ProdutoPage";
 import ProdutoForm from "../features/produto/page/ProdutoForm";
 
+import EmpresaPage from "../features/empresa/page/EmpresaPage";
+import EmpresaForm from "../features/empresa/page/EmpresaForm";
+
 export default function Router() {
     return (
         <BrowserRouter>
             <Routes>
+
                 <Route path="/" element={<Home />} />
 
                 <Route path="/cliente" element={<ClientePage />} />
@@ -19,6 +23,10 @@ export default function Router() {
 
                 <Route path="/produto" element={<ProdutoPage />} />
                 <Route path="/produto-form" element={<ProdutoForm />} />
+
+                <Route path="/empresa" element={<EmpresaPage />} />
+                <Route path="/empresa-form" element={<EmpresaForm />} />
+
             </Routes>
         </BrowserRouter>
     );
