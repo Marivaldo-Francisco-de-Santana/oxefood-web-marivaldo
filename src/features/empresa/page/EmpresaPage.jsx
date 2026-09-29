@@ -1,4 +1,6 @@
+
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 
 import Breadcrumbs from "../../../shared/components/Breadcrumbs";
 import CrudActions from "../../../shared/components/CrudActions";
@@ -6,8 +8,14 @@ import Footer from "../../../shared/components/Footer";
 import Menu from "../../../shared/components/Menu";
 import NewButton from "../../../shared/components/NewButton";
 
-import { listar } from "../../../shared/services/crudService";
-import { MAPPING_CONTROLLER_EMPRESA } from "../service/empresaService";
+import {
+    listar,
+    remover
+} from "../../../shared/services/crudService";
+
+import {
+    MAPPING_CONTROLLER_EMPRESA
+} from "../service/empresaService";
 
 export default function EmpresaPage() {
 
@@ -25,7 +33,10 @@ export default function EmpresaPage() {
                 MAPPING_CONTROLLER_EMPRESA
             );
 
-            console.log("EMPRESAS RECEBIDAS:", data);
+            console.log(
+                "EMPRESAS RECEBIDAS:",
+                data
+            );
 
             setLista(data);
 
@@ -46,17 +57,33 @@ export default function EmpresaPage() {
         );
     }
 
-    function confirmarRemover(id) {
+    async function confirmarRemover(id) {
 
-        if (
-            confirm(
-                "Deseja realmente excluir esta empresa?"
-            )
-        ) {
+        if (!confirm(
+            "Deseja realmente excluir esta empresa?"
+        )) {
+            return;
+        }
 
-            console.log(
-                "Excluir empresa:",
+        try {
+
+            await remover(
+                MAPPING_CONTROLLER_EMPRESA,
                 id
+            );
+
+            await carregar();
+
+            toast.success(
+                "Empresa removida com sucesso!"
+            );
+
+        } catch (erro) {
+
+            console.error(erro);
+
+            toast.error(
+                "Erro ao tentar remover a empresa."
             );
         }
     }
@@ -96,7 +123,9 @@ export default function EmpresaPage() {
                             Empresas
                         </h1>
 
-                        <NewButton destino="/empresa-form" />
+                        <NewButton
+                            destino="/empresa-form"
+                        />
 
                     </div>
 
@@ -104,27 +133,27 @@ export default function EmpresaPage() {
 
                     <div
                         className="overflow-x-auto"
-                        style={{ marginTop: "30px" }}
+                        style={{
+                            marginTop: "30px"
+                        }}
                     >
 
                         <table className="table table-zebra">
 
                             <thead>
 
-                                <tr style={{ textAlign: "center" }}>
+                                <tr
+                                    style={{
+                                        textAlign: "center"
+                                    }}
+                                >
 
                                     <th>Razão Social</th>
-
                                     <th>Nome Fantasia</th>
-
                                     <th>CNPJ</th>
-
                                     <th>E-mail</th>
-
                                     <th>Telefone</th>
-
                                     <th>Endereço</th>
-
                                     <th>Ações</th>
 
                                 </tr>
@@ -168,16 +197,19 @@ export default function EmpresaPage() {
                                         >
 
                                             <CrudActions
+
                                                 onEdit={() =>
                                                     editar(
                                                         empresa.id
                                                     )
                                                 }
+
                                                 onDelete={() =>
                                                     confirmarRemover(
                                                         empresa.id
                                                     )
                                                 }
+
                                             />
 
                                         </td>
