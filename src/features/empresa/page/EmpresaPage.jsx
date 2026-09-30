@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 
@@ -9,6 +8,7 @@ import Menu from "../../../shared/components/Menu";
 import NewButton from "../../../shared/components/NewButton";
 
 import {
+    buscarPorId,
     listar,
     remover
 } from "../../../shared/services/crudService";
@@ -20,6 +20,16 @@ import {
 export default function EmpresaPage() {
 
     const [lista, setLista] = useState([]);
+
+    const [empresa, setEmpresa] = useState({
+        id: null,
+        razaoSocial: "",
+        nomeFantasia: "",
+        cnpj: "",
+        email: "",
+        telefone: "",
+        endereco: ""
+    });
 
     useEffect(() => {
         carregar();
@@ -88,7 +98,41 @@ export default function EmpresaPage() {
         }
     }
 
+    async function detalhar(id) {
+
+        try {
+
+            const data = await buscarPorId(
+                MAPPING_CONTROLLER_EMPRESA,
+                id
+            );
+
+            setEmpresa({
+                id: data.id,
+                razaoSocial: data.razaoSocial ?? "",
+                nomeFantasia: data.nomeFantasia ?? "",
+                cnpj: data.cnpj ?? "",
+                email: data.email ?? "",
+                telefone: data.telefone ?? "",
+                endereco: data.endereco ?? ""
+            });
+
+            document
+                .getElementById("modal-detalhar")
+                .showModal();
+
+        } catch (erro) {
+
+            console.error(erro);
+
+            toast.error(
+                "Erro ao carregar empresa."
+            );
+        }
+    }
+
     return (
+
         <div>
 
             <Menu />
@@ -198,6 +242,12 @@ export default function EmpresaPage() {
 
                                             <CrudActions
 
+                                                onDetail={() =>
+                                                    detalhar(
+                                                        empresa.id
+                                                    )
+                                                }
+
                                                 onEdit={() =>
                                                     editar(
                                                         empresa.id
@@ -228,8 +278,70 @@ export default function EmpresaPage() {
 
             </div>
 
+            {/* MODAL DE DETALHES DA EMPRESA */}
+
+            <dialog
+                id="modal-detalhar"
+                className="modal"
+            >
+
+                <div className="modal-box">
+
+                    <h3 className="font-bold text-lg">
+                        Dados da Empresa
+                    </h3>
+
+                    <div className="divider" />
+
+                    <p className="py-2">
+                        <strong>Razão Social:</strong>{" "}
+                        {empresa.razaoSocial}
+                    </p>
+
+                    <p className="py-2">
+                        <strong>Nome Fantasia:</strong>{" "}
+                        {empresa.nomeFantasia}
+                    </p>
+
+                    <p className="py-2">
+                        <strong>CNPJ:</strong>{" "}
+                        {empresa.cnpj}
+                    </p>
+
+                    <p className="py-2">
+                        <strong>E-mail:</strong>{" "}
+                        {empresa.email}
+                    </p>
+
+                    <p className="py-2">
+                        <strong>Telefone:</strong>{" "}
+                        {empresa.telefone}
+                    </p>
+
+                    <p className="py-2">
+                        <strong>Endereço:</strong>{" "}
+                        {empresa.endereco}
+                    </p>
+
+                    <div className="modal-action">
+
+                        <form method="dialog">
+
+                            <button className="btn">
+                                Fechar
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+            </dialog>
+
             <Footer />
 
         </div>
     );
 }
+

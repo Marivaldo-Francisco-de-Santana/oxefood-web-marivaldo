@@ -8,6 +8,7 @@ import Menu from "../../../shared/components/Menu";
 import NewButton from "../../../shared/components/NewButton";
 
 import {
+    buscarPorId,
     listar,
     remover
 } from "../../../shared/services/crudService";
@@ -19,6 +20,13 @@ import {
 export default function ProdutoPage() {
 
     const [lista, setLista] = useState([]);
+
+    const [produto, setProduto] = useState({
+        id: null,
+        nome: "",
+        descricao: "",
+        preco: ""
+    });
 
     useEffect(() => {
         carregar();
@@ -98,7 +106,38 @@ export default function ProdutoPage() {
         );
     }
 
+    async function detalhar(id) {
+
+        try {
+
+            const data = await buscarPorId(
+                MAPPING_CONTROLLER_PRODUTO,
+                id
+            );
+
+            setProduto({
+                id: data.id,
+                nome: data.nome ?? "",
+                descricao: data.descricao ?? "",
+                preco: data.preco ?? ""
+            });
+
+            document
+                .getElementById("modal-detalhar")
+                .showModal();
+
+        } catch (erro) {
+
+            console.error(erro);
+
+            toast.error(
+                "Erro ao carregar produto."
+            );
+        }
+    }
+
     return (
+
         <div>
 
             <Menu />
@@ -206,16 +245,25 @@ export default function ProdutoPage() {
                                         >
 
                                             <CrudActions
+
+                                                onDetail={() =>
+                                                    detalhar(
+                                                        produto.id
+                                                    )
+                                                }
+
                                                 onEdit={() =>
                                                     editar(
                                                         produto.id
                                                     )
                                                 }
+
                                                 onDelete={() =>
                                                     confirmarRemover(
                                                         produto.id
                                                     )
                                                 }
+
                                             />
 
                                         </td>
@@ -233,6 +281,52 @@ export default function ProdutoPage() {
                 </div>
 
             </div>
+
+            {/* MODAL DE DETALHES DO PRODUTO */}
+
+            <dialog
+                id="modal-detalhar"
+                className="modal"
+            >
+
+                <div className="modal-box">
+
+                    <h3 className="font-bold text-lg">
+                        Dados do Produto
+                    </h3>
+
+                    <div className="divider" />
+
+                    <p className="py-4">
+                        <strong>Nome:</strong>{" "}
+                        {produto.nome}
+                    </p>
+
+                    <p className="py-4">
+                        <strong>Descrição:</strong>{" "}
+                        {produto.descricao}
+                    </p>
+
+                    <p className="py-4">
+                        <strong>Preço:</strong>{" "}
+                        {formatarPreco(produto.preco)}
+                    </p>
+
+                    <div className="modal-action">
+
+                        <form method="dialog">
+
+                            <button className="btn">
+                                Fechar
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+            </dialog>
 
             <Footer />
 
