@@ -53,6 +53,10 @@ export default function ProdutoPage() {
                 "ERRO AO CARREGAR PRODUTOS:",
                 erro
             );
+
+            toast.error(
+                "Erro ao carregar produtos."
+            );
         }
     }
 
@@ -333,3 +337,4 @@ export default function ProdutoPage() {
         </div>
     );
 }
+
