@@ -8,44 +8,47 @@ import Menu from "../../../shared/components/Menu";
 import SaveButton from "../../../shared/components/SaveButton";
 
 import { cadastrar } from "../../../shared/services/crudService";
+import { MAPPING_CONTROLLER_VOTO } from "../service/votoService";
 
-export default function ClienteForm() {
+const VOTO_VAZIO = {
+    nomeEleitor: "",
+    numeroRegistroEleitoral: "",
+    numeroCandidatoDepFederal: "",
+    numeroCandidatoDepEstadual: "",
+    numeroCandidatoSenador: "",
+    numeroCandidatoGovernador: "",
+    numeroCandidatoPresidente: ""
+};
 
-    const [voto, setVoto] = useState({
-        nomeEleitor: "",
-        numeroRegistroEleitoral: "",
-        dataVotacao: ""
-    });
+const paraNumero = (valor) => (valor === "" ? null : Number(valor));
+
+export default function VotoForm() {
+
+    const [voto, setVoto] = useState(VOTO_VAZIO);
+
+    function alterar(campo, valor) {
+        setVoto({ ...voto, [campo]: valor });
+    }
 
     async function salvar() {
 
+        const votoRequest = {
+            nomeEleitor: voto.nomeEleitor,
+            numeroRegistroEleitoral: voto.numeroRegistroEleitoral,
+            numeroCandidatoDepFederal: paraNumero(voto.numeroCandidatoDepFederal),
+            numeroCandidatoDepEstadual: paraNumero(voto.numeroCandidatoDepEstadual),
+            numeroCandidatoSenador: paraNumero(voto.numeroCandidatoSenador),
+            numeroCandidatoGovernador: paraNumero(voto.numeroCandidatoGovernador),
+            numeroCandidatoPresidente: paraNumero(voto.numeroCandidatoPresidente)
+        };
+
         try {
-            console.log("ENVIANDO VOTO:", voto);
-
-            const resposta = await cadastrar(
-                MAPPING_CONTROLLER_VOTO,
-                voto
-            );
-
-            console.log("VOTO CADASTRADO:", resposta);
-
+            await cadastrar(MAPPING_CONTROLLER_VOTO, votoRequest);
             toast.success("Voto cadastrado com sucesso!");
-
-            setCliente({
-                nomeEleitor: "",
-                numeroRegistroEleitoral: "",
-                dataVotacao: ""
-            });
+            setVoto(VOTO_VAZIO);
 
         } catch (erro) {
-
             console.error("ERRO AO CADASTRAR VOTO:", erro);
-
-            if (erro.response) {
-                console.error("STATUS:", erro.response.status);
-                console.error("RESPOSTA:", erro.response.data);
-            }
-
             toast.error("Erro ao cadastrar voto.");
         }
     }
@@ -60,37 +63,22 @@ export default function ClienteForm() {
                 { label: "Cadastrar" }
             ]} />
 
-            <div
-                style={{
-                    marginTop: "40px",
-                    marginLeft: "10%",
-                    marginRight: "10%"
-                }}
-            >
+            <div style={{ marginTop: "40px", marginLeft: "10%", marginRight: "10%" }}>
 
                 <div className="overflow-x-auto shadow-sm">
 
                     <div
                         className="flex items-center justify-between mb-6"
-                        style={{
-                            marginTop: "20px",
-                            marginLeft: "10px",
-                            marginRight: "10px"
-                        }}
+                        style={{ marginTop: "20px", marginLeft: "10px", marginRight: "10px" }}
                     >
-
                         <h1 className="text-3xl font-bold text-gray-800">
-                            Novo Voto
+                            Votação 2026
                         </h1>
-
                     </div>
 
                     <div className="divider divider-info" />
 
-                    <div
-                        className="overflow-x-auto"
-                        style={{ padding: "30px" }}
-                    >
+                    <div style={{ padding: "30px" }}>
 
                         <form
                             onSubmit={(e) => {
@@ -99,222 +87,106 @@ export default function ClienteForm() {
                             }}
                         >
 
-                            {/* NOME E CPF */}
+                            <div className="grid grid-cols-2 gap-x-16 gap-y-10 p-8">
 
-                            <div className="flex w-full">
+                                <fieldset className="fieldset w-full">
+                                    <label className="fieldset-legend" htmlFor="nomeEleitor">
+                                        Eleitor
+                                    </label>
+                                    <input
+                                        type="text"
+                                        id="nomeEleitor"
+                                        className="input input-bordered w-full"
+                                        value={voto.nomeEleitor}
+                                        required
+                                        onChange={(e) => alterar("nomeEleitor", e.target.value)}
+                                    />
+                                </fieldset>
 
-                                <div
-                                    className="card rounded-box grid grow p-8"
-                                    style={{ padding: "30px" }}
-                                >
+                                <fieldset className="fieldset w-full">
+                                    <label className="fieldset-legend" htmlFor="numeroRegistroEleitoral">
+                                        Registro
+                                    </label>
+                                    <input
+                                        type="text"
+                                        id="numeroRegistroEleitoral"
+                                        className="input input-bordered w-full"
+                                        value={voto.numeroRegistroEleitoral}
+                                        required
+                                        onChange={(e) => alterar("numeroRegistroEleitoral", e.target.value)}
+                                    />
+                                </fieldset>
 
-                                    <fieldset className="fieldset w-full">
+                                <fieldset className="fieldset w-full">
+                                    <label className="fieldset-legend" htmlFor="numeroCandidatoDepFederal">
+                                        Número Candidato Dep. Federal
+                                    </label>
+                                    <input
+                                        type="number"
+                                        id="numeroCandidatoDepFederal"
+                                        className="input input-bordered w-full"
+                                        value={voto.numeroCandidatoDepFederal}
+                                        onChange={(e) => alterar("numeroCandidatoDepFederal", e.target.value)}
+                                    />
+                                </fieldset>
 
-                                        <label
-                                            className="fieldset-legend"
-                                            htmlFor="nome"
-                                        >
-                                            Nome
-                                        </label>
+                                <fieldset className="fieldset w-full">
+                                    <label className="fieldset-legend" htmlFor="numeroCandidatoDepEstadual">
+                                        Número Candidato Dep. Estadual
+                                    </label>
+                                    <input
+                                        type="number"
+                                        id="numeroCandidatoDepEstadual"
+                                        className="input input-bordered w-full"
+                                        value={voto.numeroCandidatoDepEstadual}
+                                        onChange={(e) => alterar("numeroCandidatoDepEstadual", e.target.value)}
+                                    />
+                                </fieldset>
 
-                                        <input
-                                            type="text"
-                                            id="nome"
-                                            className="input input-bordered w-full"
-                                            value={voto.nome}
-                                            required
-                                            onChange={(e) =>
-                                                setCliente({
-                                                    ...voto,
-                                                    nome: e.target.value
-                                                })
-                                            }
-                                        />
+                                <fieldset className="fieldset w-full">
+                                    <label className="fieldset-legend" htmlFor="numeroCandidatoSenador">
+                                        Número Candidato Senador
+                                    </label>
+                                    <input
+                                        type="number"
+                                        id="numeroCandidatoSenador"
+                                        className="input input-bordered w-full"
+                                        value={voto.numeroCandidatoSenador}
+                                        onChange={(e) => alterar("numeroCandidatoSenador", e.target.value)}
+                                    />
+                                </fieldset>
 
-                                    </fieldset>
+                                <fieldset className="fieldset w-full">
+                                    <label className="fieldset-legend" htmlFor="numeroCandidatoGovernador">
+                                        Número Candidato Governador
+                                    </label>
+                                    <input
+                                        type="number"
+                                        id="numeroCandidatoGovernador"
+                                        className="input input-bordered w-full"
+                                        value={voto.numeroCandidatoGovernador}
+                                        onChange={(e) => alterar("numeroCandidatoGovernador", e.target.value)}
+                                    />
+                                </fieldset>
 
-                                </div>
-
-
-                                <div
-                                    className="card rounded-box grid grow p-8"
-                                    style={{ padding: "30px" }}
-                                >
-
-                                    <fieldset className="fieldset w-full">
-
-                                        <label
-                                            className="fieldset-legend"
-                                            htmlFor="cpf"
-                                        >
-                                            CPF
-                                        </label>
-
-                                        <input
-                                            type="text"
-                                            id="cpf"
-                                            placeholder="000.000.000-00"
-                                            className="input input-bordered w-full"
-                                            value={cliente.numeroRegistroEleitoral}
-                                            required
-                                            onChange={(e) =>
-                                                setCliente({
-                                                    ...voto,
-                                                    cpfnumeroRegistroEleitoral: e.target.value
-                                                })
-                                            }
-                                        />
-
-                                    </fieldset>
-
-                                </div>
-
-                            </div>
-
-
-                            {/* TELEFONES E DATA */}
-
-                            <div className="flex w-full">
-
-                                <div
-                                    className="card rounded-box grid grow p-8"
-                                    style={{ padding: "30px" }}
-                                >
-
-                                    <fieldset className="fieldset w-full">
-
-                                        <label
-                                            className="fieldset-legend"
-                                            htmlFor="foneCelular"
-                                        >
-                                            Fone Celular
-                                        </label>
-
-                                        <input
-                                            type="text"
-                                            id="foneCelular"
-                                            placeholder="(81) 9 8888-7777"
-                                            className="input input-bordered w-full"
-                                            value={voto.foneCelular}
-                                            required
-                                            onChange={(e) =>
-                                                setCliente({
-                                                    ...voto,
-                                                    foneCelular: e.target.value
-                                                })
-                                            }
-                                        />
-
-                                    </fieldset>
-
-                                </div>
-
-
-                                <div
-                                    className="card rounded-box grid grow p-8"
-                                    style={{ padding: "30px" }}
-                                >
-
-                                    <fieldset className="fieldset w-full">
-
-                                        <label
-                                            className="fieldset-legend"
-                                            htmlFor="foneFixo"
-                                        >
-                                            Fone Fixo
-                                        </label>
-
-                                        <input
-                                            type="text"
-                                            id="foneFixo"
-                                            placeholder="(81) 3333-4444"
-                                            className="input input-bordered w-full"
-                                            value={voto.foneFixo}
-                                            onChange={(e) =>
-                                                setCliente({
-                                                    ...voto,
-                                                    foneFixo: e.target.value
-                                                })
-                                            }
-                                        />
-
-                                    </fieldset>
-
-                                </div>
-
-
-                                <div
-                                    className="card rounded-box grid grow p-8"
-                                    style={{ padding: "30px" }}
-                                >
-
-                                    <fieldset className="fieldset w-full">
-
-                                        <label
-                                            className="fieldset-legend"
-                                            htmlFor="dataNascimento"
-                                        >
-                                            Data Votacao
-                                        </label>
-
-                                        <input
-                                            type="date"
-                                            id="dataNascimento"
-                                            className="input input-bordered w-full"
-                                            value={voto.datadataVotacao}
-                                            required
-                                            onChange={(e) =>
-                                                setCliente({
-                                                    ...voto,
-                                                    dataVotacao: e.target.value
-                                                })
-                                            }
-                                        />
-
-                                    </fieldset>
-
-                                </div>
+                                <fieldset className="fieldset" style={{ maxWidth: "270px" }}>
+                                    <label className="fieldset-legend" htmlFor="numeroCandidatoPresidente">
+                                        Número Candidato Presidente
+                                    </label>
+                                    <input
+                                        type="number"
+                                        id="numeroCandidatoPresidente"
+                                        className="input input-bordered w-full"
+                                        value={voto.numeroCandidatoPresidente}
+                                        onChange={(e) => alterar("numeroCandidatoPresidente", e.target.value)}
+                                    />
+                                </fieldset>
 
                             </div>
 
-
-                            {/* BOTÕES */}
-
-                            <div className="flex w-full">
-
-                                <div
-                                    className="card rounded-box grid grow p-8"
-                                    style={{ padding: "30px" }}
-                                >
-
-                                    <div
-                                        style={{
-                                            marginTop: "50px",
-                                            textAlign: "left"
-                                        }}
-                                    >
-                                        <BackButton destino="/cliente" />
-                                    </div>
-
-                                </div>
-
-
-                                <div
-                                    className="card rounded-box grid grow p-8"
-                                    style={{ padding: "30px" }}
-                                >
-
-                                    <div
-                                        style={{
-                                            marginTop: "50px",
-                                            textAlign: "right"
-                                        }}
-                                    >
-                                        <SaveButton save={salvar} />
-                                    </div>
-
-                                </div>
-
+                            <div className="flex w-full justify-between p-8" style={{ marginTop: "40px" }}>
+                                <BackButton destino="/voto" />
+                                <SaveButton save={salvar} />
                             </div>
 
                         </form>

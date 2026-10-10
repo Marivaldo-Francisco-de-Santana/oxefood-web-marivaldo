@@ -11,6 +11,9 @@ import ProdutoForm from "../features/produto/page/ProdutoForm";
 import EmpresaPage from "../features/empresa/page/EmpresaPage";
 import EmpresaForm from "../features/empresa/page/EmpresaForm";
 
+import VotoPage from "../features/voto/page/VotoPage";
+import VotoForm from "../features/voto/page/VotoForm";
+
 export default function Router() {
     return (
         <BrowserRouter>
@@ -26,6 +29,9 @@ export default function Router() {
 
                 <Route path="/empresa" element={<EmpresaPage />} />
                 <Route path="/empresa-form" element={<EmpresaForm />} />
+
+                <Route path="/voto" element={<VotoPage />} />
+                <Route path="/voto-form" element={<VotoForm />} />
 
             </Routes>
         </BrowserRouter>

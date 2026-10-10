@@ -1,1 +1,1 @@
-export const MAPPING_CONTROLLER_CLIENTE = "/api/voto";
+export const MAPPING_CONTROLLER_VOTO = "/api/voto";
