@@ -6,18 +6,32 @@ import Footer from "../../../shared/components/Footer";
 import Menu from "../../../shared/components/Menu";
 import NewButton from "../../../shared/components/NewButton";
 
-import { buscarPorId, listar, remover } from "../../../shared/services/crudService";
+import { listar, remover } from "../../../shared/services/crudService";
 import { MAPPING_CONTROLLER_VOTO } from "../service/votoService";
+
+const VOTO_VAZIO = {
+    nomeEleitor: "",
+    numeroRegistroEleitoral: "",
+    dataVotacao: "",
+    numeroCandidatoDepFederal: "",
+    numeroCandidatoDepEstadual: "",
+    numeroCandidatoSenador: "",
+    numeroCandidatoGovernador: "",
+    numeroCandidatoPresidente: ""
+};
+
+function formatarData(data) {
+    if (!data) {
+        return "";
+    }
+    const [ano, mes, dia] = data.split("-");
+    return `${dia}/${mes}/${ano}`;
+}
 
 export default function VotoPage() {
 
     const [lista, setLista] = useState([]);
-
-    const [voto, setVoto] = useState({
-        nomeEleitor: "",
-        numeroRegistroEleitoral: "",
-        dataVotacao: ""
-    });
+    const [voto, setVoto] = useState(VOTO_VAZIO);
 
     useEffect(() => {
         carregar();
@@ -27,11 +41,11 @@ export default function VotoPage() {
 
         try {
             const data = await listar(MAPPING_CONTROLLER_VOTO);
-            console.log("VOTOS RECEBIDOS:", data);
             setLista(data);
 
         } catch (erro) {
             console.error("ERRO AO CARREGAR VOTOS:", erro);
+            toast.error("Erro ao carregar os votos.");
         }
     }
 
@@ -56,22 +70,9 @@ export default function VotoPage() {
         }
     }
 
-    async function detalhar(id) {
-
-        try {
-            const data = await buscarPorId(MAPPING_CONTROLLER_VOTO, id);
-
-            setVoto({
-                nomeEleitor: data.nomeEleitor,
-                numeroRegistroEleitoral: data.numeroRegistroEleitoral,
-                dataVotacao: data.dataVotacao
-            });
-
-            document.getElementById("modal-detalhar").showModal();
-
-        } catch (erro) {
-            toast.error("Erro ao carregar voto.");
-        }
+    function detalhar(item) {
+        setVoto(item);
+        document.getElementById("modal-detalhar").showModal();
     }
 
     return (
@@ -112,9 +113,9 @@ export default function VotoPage() {
 
                             <thead>
                                 <tr style={{ textAlign: "center" }}>
-                                    <th>Nome Eleitor</th>
-                                    <th>Número Registro Eleitoral</th>
-                                    <th>Data Votação</th>
+                                    <th>Eleitor</th>
+                                    <th>Registro</th>
+                                    <th>Data da Votação</th>
                                     <th></th>
                                 </tr>
                             </thead>
@@ -127,11 +128,11 @@ export default function VotoPage() {
 
                                         <td>{item.nomeEleitor}</td>
                                         <td>{item.numeroRegistroEleitoral}</td>
-                                        <td>{item.dataVotacao}</td>
+                                        <td>{formatarData(item.dataVotacao)}</td>
 
                                         <td style={{ textAlign: "center" }}>
                                             <CrudActions
-                                                onDetail={() => detalhar(item.id)}
+                                                onDetail={() => detalhar(item)}
                                                 onEdit={() => editar(item.id)}
                                                 onDelete={() => confirmarRemover(item.id)}
                                             />
@@ -153,16 +154,31 @@ export default function VotoPage() {
 
             <dialog id="modal-detalhar" className="modal">
                 <div className="modal-box">
-                    <h3 className="font-bold text-lg">Dados do Voto</h3>
+                    <h3 className="font-bold text-lg">Detalhamento do Voto</h3>
                     <div className="divider" />
-                    <p className="py-4">
-                        <strong>Nome Eleitor:</strong> {voto.nomeEleitor}
+                    <p className="py-2">
+                        <strong>Eleitor:</strong> {voto.nomeEleitor}
                     </p>
-                    <p className="py-4">
-                        <strong>Número Registro Eleitoral:</strong> {voto.numeroRegistroEleitoral}
+                    <p className="py-2">
+                        <strong>Registro:</strong> {voto.numeroRegistroEleitoral}
                     </p>
-                    <p className="py-4">
-                        <strong>Data Votação:</strong> {voto.dataVotacao}
+                    <p className="py-2">
+                        <strong>Data da Votação:</strong> {formatarData(voto.dataVotacao)}
+                    </p>
+                    <p className="py-2">
+                        <strong>Número Candidato Dep. Federal:</strong> {voto.numeroCandidatoDepFederal}
+                    </p>
+                    <p className="py-2">
+                        <strong>Número Candidato Dep. Estadual:</strong> {voto.numeroCandidatoDepEstadual}
+                    </p>
+                    <p className="py-2">
+                        <strong>Número Candidato Senador:</strong> {voto.numeroCandidatoSenador}
+                    </p>
+                    <p className="py-2">
+                        <strong>Número Candidato Governador:</strong> {voto.numeroCandidatoGovernador}
+                    </p>
+                    <p className="py-2">
+                        <strong>Número Candidato Presidente:</strong> {voto.numeroCandidatoPresidente}
                     </p>
 
                     <div className="modal-action">
