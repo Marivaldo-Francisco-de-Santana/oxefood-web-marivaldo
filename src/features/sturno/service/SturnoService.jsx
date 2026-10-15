@@ -1,0 +1,1 @@
+export const MAPPING_CONTROLLER_STURNO = "/api/sturno";

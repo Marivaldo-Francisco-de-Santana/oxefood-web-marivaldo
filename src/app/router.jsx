@@ -14,6 +14,9 @@ import EmpresaForm from "../features/empresa/page/EmpresaForm";
 import VotoPage from "../features/voto/page/VotoPage";
 import VotoForm from "../features/voto/page/VotoForm";
 
+import SturnoPage from "../features/sturno/page/SturnoPage";
+import SturnoForm from "../features/sturno/page/SturnoForm";
+
 export default function Router() {
     return (
         <BrowserRouter>
@@ -32,6 +35,9 @@ export default function Router() {
 
                 <Route path="/voto" element={<VotoPage />} />
                 <Route path="/voto-form" element={<VotoForm />} />
+
+                <Route path="/sturno" element={<SturnoPage />} />
+                <Route path="/sturno-form" element={<SturnoForm />} />
 
             </Routes>
         </BrowserRouter>
