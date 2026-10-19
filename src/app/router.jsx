@@ -1,27 +1,15 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
-import ClientePage from "../features/cliente/page/ClientePage";
 import ClienteForm from "../features/cliente/page/ClienteForm";
+import ClientePage from "../features/cliente/page/ClientePage";
 
 import Home from "../features/home/page/Home";
 
-import ProdutoPage from "../features/produto/page/ProdutoPage";
 import ProdutoForm from "../features/produto/page/ProdutoForm";
+import ProdutoPage from "../features/produto/page/ProdutoPage";
 
-import EmpresaPage from "../features/empresa/page/EmpresaPage";
 import EmpresaForm from "../features/empresa/page/EmpresaForm";
-
-import VotoPage from "../features/voto/page/VotoPage";
-import VotoForm from "../features/voto/page/VotoForm";
-
-import SturnoPage from "../features/sturno/page/SturnoPage";
-import SturnoForm from "../features/sturno/page/SturnoForm";
-
-import CategoriaProdutoPage from "../features/categoriaproduto/page/CategoriaProdutoPage";
-import CategoriaProdutoForm from "../features/categoriaproduto/page/CategoriaProdutoForm";
-
-import UsuarioPage from "../features/usuario/page/UsuarioPage";
-import UsuarioForm from "../features/usuario/page/UsuarioForm";
+import EmpresaPage from "../features/empresa/page/EmpresaPage";
 
 export default function Router() {
     return (
@@ -39,18 +27,7 @@ export default function Router() {
                 <Route path="/empresa" element={<EmpresaPage />} />
                 <Route path="/empresa-form" element={<EmpresaForm />} />
 
-                <Route path="/voto" element={<VotoPage />} />
-                <Route path="/voto-form" element={<VotoForm />} />
-
-                <Route path="/sturno" element={<SturnoPage />} />
-                <Route path="/sturno-form" element={<SturnoForm />} />
-
-                <Route path="/categoriaproduto" element={<CategoriaProdutoPage />} />
-                <Route path="/categoriaproduto-form" element={<CategoriaProdutoForm />} />
-
-                <Route path="/usuario" element={<UsuarioPage />} />
-                <Route path="/usuario-form" element={<UsuarioForm />} />
-
+                
             </Routes>
         </BrowserRouter>
     );
