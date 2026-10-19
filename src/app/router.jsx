@@ -17,6 +17,12 @@ import VotoForm from "../features/voto/page/VotoForm";
 import SturnoPage from "../features/sturno/page/SturnoPage";
 import SturnoForm from "../features/sturno/page/SturnoForm";
 
+import CategoriaProdutoPage from "../features/categoriaproduto/page/CategoriaProdutoPage";
+import CategoriaProdutoForm from "../features/categoriaproduto/page/CategoriaProdutoForm";
+
+import UsuarioPage from "../features/usuario/page/UsuarioPage";
+import UsuarioForm from "../features/usuario/page/UsuarioForm";
+
 export default function Router() {
     return (
         <BrowserRouter>
@@ -38,6 +44,12 @@ export default function Router() {
 
                 <Route path="/sturno" element={<SturnoPage />} />
                 <Route path="/sturno-form" element={<SturnoForm />} />
+
+                <Route path="/categoriaproduto" element={<CategoriaProdutoPage />} />
+                <Route path="/categoriaproduto-form" element={<CategoriaProdutoForm />} />
+
+                <Route path="/usuario" element={<UsuarioPage />} />
+                <Route path="/usuario-form" element={<UsuarioForm />} />
 
             </Routes>
         </BrowserRouter>
