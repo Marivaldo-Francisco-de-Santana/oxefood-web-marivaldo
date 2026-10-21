@@ -11,6 +11,10 @@ import ProdutoPage from "../features/produto/page/ProdutoPage";
 import EmpresaForm from "../features/empresa/page/EmpresaForm";
 import EmpresaPage from "../features/empresa/page/EmpresaPage";
 
+import ConfiguracaoSistemaForm from "../features/configuracaosistema/page/ConfiguracaoSistemaForm";
+import ConfiguracaoSistemaPage from "../features/configuracaosistema/page/ConfiguracaoSistemaPage";
+
+
 export default function Router() {
     return (
         <BrowserRouter>
@@ -26,6 +30,10 @@ export default function Router() {
 
                 <Route path="/empresa" element={<EmpresaPage />} />
                 <Route path="/empresa-form" element={<EmpresaForm />} />
+
+                 <Route path="/configuracaosistema" element={<ConfiguracaoSistemaPage />} />
+                <Route path="/configuracaosistema-form" element={<ConfiguracaoSistemaForm />} />
+
 
                 
             </Routes>
