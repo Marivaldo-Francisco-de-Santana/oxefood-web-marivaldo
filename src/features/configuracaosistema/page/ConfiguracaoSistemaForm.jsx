@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "react-toastify";
 
 import BackButton from "../../../shared/components/BackButton";
@@ -10,30 +10,62 @@ import SaveButton from "../../../shared/components/SaveButton";
 import { cadastrar } from "../../../shared/services/crudService";
 import { MAPPING_CONTROLLER_CONFIGURACAOSISTEMA_CADASTRO } from "../service/configuracaosistemaService";
 
+const estadoInicial = {
+    nomeEmpresa: "",
+    cnpj: "",
+    site: "",
+    emailContato: "",
+    tempoMinimoAgendamentoPedidos: "",
+    ligarAceitePedidos: false,
+    dataEntradaSistema: ""
+};
+
 export default function ConfiguracaoSistemaForm() {
 
-    const [configuracaosistema, setConfiguracaoSistema] = useState({
-        nomeEmpresa: "",
-        cnpj: "",
-        site: "",
-        emailContato: "",
-        tempoMinimoAgendamentoPedidos: "",
-        ligarAceitePedidos: "",
-        dataEntradaSistema: ""
-    });
+    const [configuracaosistema, setConfiguracaoSistema] = useState(estadoInicial);
+
+    // Referência ao formulário, para forçar a validação do navegador
+    const formRef = useRef(null);
+
+    // Evita envio duplicado (onSubmit do form + onClick do SaveButton)
+    const enviando = useRef(false);
 
     async function salvar() {
 
+        // Bloqueia o envio se houver campo vazio ou inválido
+        if (!formRef.current.reportValidity()) {
+            return;
+        }
+
+        if (enviando.current) {
+            return;
+        }
+
+        enviando.current = true;
+
         try {
+
+            const payload = {
+                nomeEmpresa: configuracaosistema.nomeEmpresa,
+                cnpj: configuracaosistema.cnpj,
+                site: configuracaosistema.site,
+                emailContato: configuracaosistema.emailContato,
+                tempoMinimoAgendamentoPedidos:
+                    configuracaosistema.tempoMinimoAgendamentoPedidos === ""
+                        ? null
+                        : Number(configuracaosistema.tempoMinimoAgendamentoPedidos),
+                ligarAceitePedidos: Boolean(configuracaosistema.ligarAceitePedidos),
+                dataEntradaSistema: configuracaosistema.dataEntradaSistema || null
+            };
 
             console.log(
                 "ENVIANDO Configuracao Sistema:",
-                configuracaosistema
+                payload
             );
 
             const resposta = await cadastrar(
                 MAPPING_CONTROLLER_CONFIGURACAOSISTEMA_CADASTRO,
-                configuracaosistema
+                payload
             );
 
             console.log(
@@ -42,18 +74,10 @@ export default function ConfiguracaoSistemaForm() {
             );
 
             toast.success(
-                "ConfiguracaoSistema cadastrada com sucesso!"
+                "Configuração cadastrada com sucesso!"
             );
 
-            setConfiguracaoSistema({
-                nomeConfiguracaoSistema: "",
-        cnpj: "",
-        site: "",
-        emailContato: "",
-        tempoMinimoAgendamentoPedidos: "",
-        ligarAceitePedidos: "",
-        dataEntradaSistema: ""
-            });
+            setConfiguracaoSistema(estadoInicial);
 
         } catch (erro) {
 
@@ -71,13 +95,17 @@ export default function ConfiguracaoSistemaForm() {
 
                 console.error(
                     "RESPOSTA:",
-                    erro.response.data
+                    JSON.stringify(erro.response.data, null, 2)
                 );
             }
 
             toast.error(
-                "Erro ao cadastrar configuracaosistema."
+                "Erro ao cadastrar configuração."
             );
+
+        } finally {
+
+            enviando.current = false;
         }
     }
 
@@ -113,7 +141,7 @@ export default function ConfiguracaoSistemaForm() {
                     >
 
                         <h1 className="text-3xl font-bold text-gray-800">
-                            Nova Configuracao Sistema
+                            Nova Configuração do Sistema
                         </h1>
 
                     </div>
@@ -126,6 +154,7 @@ export default function ConfiguracaoSistemaForm() {
                     >
 
                         <form
+                            ref={formRef}
                             onSubmit={(e) => {
 
                                 e.preventDefault();
@@ -141,18 +170,16 @@ export default function ConfiguracaoSistemaForm() {
 
                                 <div
                                     className="card rounded-box grid grow p-8"
-                                    style={{
-                                        padding: "30px"
-                                    }}
+                                    style={{ padding: "30px" }}
                                 >
 
                                     <fieldset className="fieldset w-full">
 
                                         <label
                                             className="fieldset-legend"
-                                            htmlFor="cnpj"
+                                            htmlFor="nomeEmpresa"
                                         >
-                                            NOME EMPRESA
+                                            Nome da Empresa
                                         </label>
 
                                         <input
@@ -164,8 +191,7 @@ export default function ConfiguracaoSistemaForm() {
                                             onChange={(e) =>
                                                 setConfiguracaoSistema({
                                                     ...configuracaosistema,
-                                                    nomeEmpresa:
-                                                        e.target.value
+                                                    nomeEmpresa: e.target.value
                                                 })
                                             }
                                         />
@@ -183,51 +209,7 @@ export default function ConfiguracaoSistemaForm() {
 
                                 <div
                                     className="card rounded-box grid grow p-8"
-                                    style={{
-                                        padding: "30px"
-                                    }}
-                                >
-
-                                    <fieldset className="fieldset w-full">
-
-                                        <label
-                                            className="fieldset-legend"
-                                            htmlFor="site"
-                                        >
-                                            CNPJ
-                                        </label>
-
-                                        <input
-                                            type="text"
-                                            id="cnpj"
-                                            className="input input-bordered w-full"
-                                            value={configuracaosistema.cnpj}
-                                            required
-                                            onChange={(e) =>
-                                                setConfiguracaoSistema({
-                                                    ...configuracaosistema,
-                                                    cnpj:
-                                                        e.target.value
-                                                })
-                                            }
-                                        />
-
-                                    </fieldset>
-
-                                </div>
-
-                            </div>
-
-
-                            {/* SITE */}
-
-                            <div className="flex w-full">
-
-                                <div
-                                    className="card rounded-box grid grow p-8"
-                                    style={{
-                                        padding: "30px"
-                                    }}
+                                    style={{ padding: "30px" }}
                                 >
 
                                     <fieldset className="fieldset w-full">
@@ -236,58 +218,23 @@ export default function ConfiguracaoSistemaForm() {
                                             className="fieldset-legend"
                                             htmlFor="cnpj"
                                         >
-                                            SITE
+                                            CNPJ
                                         </label>
 
                                         <input
                                             type="text"
-                                            id="site"
+                                            id="cnpj"
+                                            maxLength={18}
+                                            pattern="\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}"
+                                            title="Use o formato 00.000.000/0000-00"
                                             placeholder="00.000.000/0000-00"
                                             className="input input-bordered w-full"
-                                            value={configuracaosistema.site}
+                                            value={configuracaosistema.cnpj}
                                             required
                                             onChange={(e) =>
                                                 setConfiguracaoSistema({
                                                     ...configuracaosistema,
-                                                    site:
-                                                        e.target.value
-                                                })
-                                            }
-                                        />
-
-                                    </fieldset>
-
-                                </div>
-
-
-                                <div
-                                    className="card rounded-box grid grow p-8"
-                                    style={{
-                                        padding: "30px"
-                                    }}
-                                >
-
-                                    <fieldset className="fieldset w-full">
-
-                                        <label
-                                            className="fieldset-legend"
-                                            htmlFor="email"
-                                        >
-                                            E-mail Contato
-                                        </label>
-
-                                        <input
-                                            type="emailContato"
-                                            id="emailContato"
-                                            placeholder="configuracaosistema@emailContato.com"
-                                            className="input input-bordered w-full"
-                                            value={configuracaosistema.emailContato}
-                                            required
-                                            onChange={(e) =>
-                                                setConfiguracaoSistema({
-                                                    ...configuracaosistema,
-                                                    emailContato:
-                                                        e.target.value
+                                                    cnpj: e.target.value
                                                 })
                                             }
                                         />
@@ -299,37 +246,35 @@ export default function ConfiguracaoSistemaForm() {
                             </div>
 
 
-                            {/* TELEFONE + ENDEREÇO */}
+                            {/* SITE + E-MAIL */}
 
                             <div className="flex w-full">
 
                                 <div
                                     className="card rounded-box grid grow p-8"
-                                    style={{
-                                        padding: "30px"
-                                    }}
+                                    style={{ padding: "30px" }}
                                 >
 
                                     <fieldset className="fieldset w-full">
 
                                         <label
                                             className="fieldset-legend"
-                                            htmlFor="telefone"
+                                            htmlFor="site"
                                         >
-                                            Tempo Minimo Agendamento Pedidos
+                                            Site
                                         </label>
 
                                         <input
-                                            type="text"
-                                            id="tempoMinimoAgendamentoPedidos"
-                                            placeholder="(81) 3333-4444"
+                                            type="url"
+                                            id="site"
+                                            placeholder="https://www.suaempresa.com.br"
                                             className="input input-bordered w-full"
-                                            value={configuracaosistema.tempoMinimoAgendamentoPedidos}
+                                            value={configuracaosistema.site}
+                                            required
                                             onChange={(e) =>
                                                 setConfiguracaoSistema({
                                                     ...configuracaosistema,
-                                                    tempoMinimoAgendamentoPedidos:
-                                                        e.target.value
+                                                    site: e.target.value
                                                 })
                                             }
                                         />
@@ -341,31 +286,140 @@ export default function ConfiguracaoSistemaForm() {
 
                                 <div
                                     className="card rounded-box grid grow p-8"
-                                    style={{
-                                        padding: "30px"
-                                    }}
+                                    style={{ padding: "30px" }}
                                 >
 
                                     <fieldset className="fieldset w-full">
 
                                         <label
                                             className="fieldset-legend"
-                                            htmlFor="endereco"
+                                            htmlFor="emailContato"
                                         >
-                                            Ligar Aceite Pedidos
+                                            E-mail de Contato
                                         </label>
 
                                         <input
-                                            type="text"
-                                            id="ligarAceitePedidos"
+                                            type="email"
+                                            id="emailContato"
+                                            placeholder="contato@suaempresa.com.br"
                                             className="input input-bordered w-full"
-                                            value={configuracaosistema.ligarAceitePedidos}
+                                            value={configuracaosistema.emailContato}
                                             required
                                             onChange={(e) =>
                                                 setConfiguracaoSistema({
                                                     ...configuracaosistema,
-                                                    ligarAceitePedidos:
-                                                        e.target.value
+                                                    emailContato: e.target.value
+                                                })
+                                            }
+                                        />
+
+                                    </fieldset>
+
+                                </div>
+
+                            </div>
+
+
+                            {/* TEMPO MÍNIMO + DATA DE ENTRADA */}
+
+                            <div className="flex w-full">
+
+                                <div
+                                    className="card rounded-box grid grow p-8"
+                                    style={{ padding: "30px" }}
+                                >
+
+                                    <fieldset className="fieldset w-full">
+
+                                        <label
+                                            className="fieldset-legend"
+                                            htmlFor="tempoMinimoAgendamentoPedidos"
+                                        >
+                                            Tempo Mínimo Agendamento Pedidos
+                                        </label>
+
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            id="tempoMinimoAgendamentoPedidos"
+                                            className="input input-bordered w-full"
+                                            value={configuracaosistema.tempoMinimoAgendamentoPedidos}
+                                            required
+                                            onChange={(e) =>
+                                                setConfiguracaoSistema({
+                                                    ...configuracaosistema,
+                                                    tempoMinimoAgendamentoPedidos: e.target.value
+                                                })
+                                            }
+                                        />
+
+                                    </fieldset>
+
+                                </div>
+
+
+                                <div
+                                    className="card rounded-box grid grow p-8"
+                                    style={{ padding: "30px" }}
+                                >
+
+                                    <fieldset className="fieldset w-full">
+
+                                        <label
+                                            className="fieldset-legend"
+                                            htmlFor="dataEntradaSistema"
+                                        >
+                                            Data de Entrada no Sistema
+                                        </label>
+
+                                        <input
+                                            type="date"
+                                            id="dataEntradaSistema"
+                                            className="input input-bordered w-full"
+                                            value={configuracaosistema.dataEntradaSistema}
+                                            required
+                                            onChange={(e) =>
+                                                setConfiguracaoSistema({
+                                                    ...configuracaosistema,
+                                                    dataEntradaSistema: e.target.value
+                                                })
+                                            }
+                                        />
+
+                                    </fieldset>
+
+                                </div>
+
+                            </div>
+
+
+                            {/* LIGAR ACEITE PEDIDOS */}
+
+                            <div className="flex w-full">
+
+                                <div
+                                    className="card rounded-box grid grow p-8"
+                                    style={{ padding: "30px" }}
+                                >
+
+                                    <fieldset className="fieldset w-full">
+
+                                        <label
+                                            className="fieldset-legend"
+                                            htmlFor="ligarAceitePedidos"
+                                        >
+                                            Ligar Aceite de Pedidos
+                                        </label>
+
+                                        <input
+                                            type="checkbox"
+                                            id="ligarAceitePedidos"
+                                            className="toggle toggle-info"
+                                            checked={configuracaosistema.ligarAceitePedidos}
+                                            onChange={(e) =>
+                                                setConfiguracaoSistema({
+                                                    ...configuracaosistema,
+                                                    ligarAceitePedidos: e.target.checked
                                                 })
                                             }
                                         />
@@ -383,9 +437,7 @@ export default function ConfiguracaoSistemaForm() {
 
                                 <div
                                     className="card rounded-box grid grow p-8"
-                                    style={{
-                                        padding: "30px"
-                                    }}
+                                    style={{ padding: "30px" }}
                                 >
 
                                     <div
@@ -406,9 +458,7 @@ export default function ConfiguracaoSistemaForm() {
 
                                 <div
                                     className="card rounded-box grid grow p-8"
-                                    style={{
-                                        padding: "30px"
-                                    }}
+                                    style={{ padding: "30px" }}
                                 >
 
                                     <div

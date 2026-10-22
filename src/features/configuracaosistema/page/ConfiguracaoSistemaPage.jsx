@@ -17,18 +17,35 @@ import {
     MAPPING_CONTROLLER_CONFIGURACAOSISTEMA
 } from "../service/configuracaosistemaService";
 
+// Formata yyyy-MM-dd para dd/MM/yyyy sem sofrer efeito de fuso horário
+function formatarData(data) {
+
+    if (!data) {
+        return "-";
+    }
+
+    const [ano, mes, dia] = String(data).split("-");
+
+    return `${dia}/${mes}/${ano}`;
+}
+
+function formatarAceite(valor) {
+    return valor ? "Ligado" : "Desligado";
+}
+
 export default function ConfiguracaoSistemaPage() {
 
     const [lista, setLista] = useState([]);
 
     const [configuracaosistema, setConfiguracaoSistema] = useState({
         id: null,
-        razaoSocial: "",
-        nomeFantasia: "",
+        nomeEmpresa: "",
         cnpj: "",
-        email: "",
-        telefone: "",
-        endereco: ""
+        site: "",
+        emailContato: "",
+        tempoMinimoAgendamentoPedidos: "",
+        ligarAceitePedidos: false,
+        dataEntradaSistema: ""
     });
 
     useEffect(() => {
@@ -70,7 +87,7 @@ export default function ConfiguracaoSistemaPage() {
     async function confirmarRemover(id) {
 
         if (!confirm(
-            "Deseja realmente excluir esta configuracaosistema?"
+            "Deseja realmente excluir esta configuração?"
         )) {
             return;
         }
@@ -85,7 +102,7 @@ export default function ConfiguracaoSistemaPage() {
             await carregar();
 
             toast.success(
-                "ConfiguracaoSistema removida com sucesso!"
+                "Configuração removida com sucesso!"
             );
 
         } catch (erro) {
@@ -93,7 +110,7 @@ export default function ConfiguracaoSistemaPage() {
             console.error(erro);
 
             toast.error(
-                "Erro ao tentar remover a configuracaosistema."
+                "Erro ao tentar remover a configuração."
             );
         }
     }
@@ -109,12 +126,14 @@ export default function ConfiguracaoSistemaPage() {
 
             setConfiguracaoSistema({
                 id: data.id,
-                nomeEmpresa: data.cnpj ?? "",
-                site: data.nomeFantasia ?? "",
+                nomeEmpresa: data.nomeEmpresa ?? "",
                 cnpj: data.cnpj ?? "",
-                email: data.email ?? "",
-                telefone: data.telefone ?? "",
-                endereco: data.endereco ?? ""
+                site: data.site ?? "",
+                emailContato: data.emailContato ?? "",
+                tempoMinimoAgendamentoPedidos:
+                    data.tempoMinimoAgendamentoPedidos ?? "",
+                ligarAceitePedidos: data.ligarAceitePedidos ?? false,
+                dataEntradaSistema: data.dataEntradaSistema ?? ""
             });
 
             document
@@ -126,7 +145,7 @@ export default function ConfiguracaoSistemaPage() {
             console.error(erro);
 
             toast.error(
-                "Erro ao carregar configuracaosistema."
+                "Erro ao carregar configuração."
             );
         }
     }
@@ -164,7 +183,7 @@ export default function ConfiguracaoSistemaPage() {
                     >
 
                         <h1 className="text-3xl font-bold text-gray-800">
-                            Configuracao Sistemas
+                            Configurações do Sistema
                         </h1>
 
                         <NewButton
@@ -192,12 +211,13 @@ export default function ConfiguracaoSistemaPage() {
                                     }}
                                 >
 
-                                    <th>Razão Social</th>
-                                    <th>Nome Fantasia</th>
+                                    <th>Nome da Empresa</th>
                                     <th>CNPJ</th>
-                                    <th>E-mail</th>
-                                    <th>Telefone</th>
-                                    <th>Endereço</th>
+                                    <th>Site</th>
+                                    <th>E-mail de Contato</th>
+                                    <th>Tempo Mínimo (min)</th>
+                                    <th>Aceite de Pedidos</th>
+                                    <th>Data de Entrada</th>
                                     <th>Ações</th>
 
                                 </tr>
@@ -206,32 +226,36 @@ export default function ConfiguracaoSistemaPage() {
 
                             <tbody>
 
-                                {lista.map((configuracaosistema) => (
+                                {lista.map((item) => (
 
-                                    <tr key={configuracaosistema.id}>
+                                    <tr key={item.id}>
 
                                         <td>
-                                            {configuracaosistema.nomeEmpresa}
+                                            {item.nomeEmpresa}
                                         </td>
 
                                         <td>
-                                            {configuracaosistema.cnpj}
+                                            {item.cnpj}
                                         </td>
 
                                         <td>
-                                            {configuracaosistema.site}
+                                            {item.site}
                                         </td>
 
                                         <td>
-                                            {configuracaosistema.emailContatol}
+                                            {item.emailContato}
                                         </td>
 
                                         <td>
-                                            {configuracaosistema.ligarAceitePedidos}
+                                            {item.tempoMinimoAgendamentoPedidos}
                                         </td>
 
                                         <td>
-                                            {configuracaosistema.dataEntradaSistema}
+                                            {formatarAceite(item.ligarAceitePedidos)}
+                                        </td>
+
+                                        <td>
+                                            {formatarData(item.dataEntradaSistema)}
                                         </td>
 
                                         <td
@@ -243,21 +267,15 @@ export default function ConfiguracaoSistemaPage() {
                                             <CrudActions
 
                                                 onDetail={() =>
-                                                    detalhar(
-                                                        configuracaosistema.id
-                                                    )
+                                                    detalhar(item.id)
                                                 }
 
                                                 onEdit={() =>
-                                                    editar(
-                                                        configuracaosistema.id
-                                                    )
+                                                    editar(item.id)
                                                 }
 
                                                 onDelete={() =>
-                                                    confirmarRemover(
-                                                        configuracaosistema.id
-                                                    )
+                                                    confirmarRemover(item.id)
                                                 }
 
                                             />
@@ -288,13 +306,13 @@ export default function ConfiguracaoSistemaPage() {
                 <div className="modal-box">
 
                     <h3 className="font-bold text-lg">
-                        Dados da ConfiguracaoSistema
+                        Dados da Configuração do Sistema
                     </h3>
 
                     <div className="divider" />
 
                     <p className="py-2">
-                        <strong>Nome Empresa:</strong>{" "}
+                        <strong>Nome da Empresa:</strong>{" "}
                         {configuracaosistema.nomeEmpresa}
                     </p>
 
@@ -304,23 +322,28 @@ export default function ConfiguracaoSistemaPage() {
                     </p>
 
                     <p className="py-2">
-                        <strong>SITE:</strong>{" "}
+                        <strong>Site:</strong>{" "}
                         {configuracaosistema.site}
                     </p>
 
                     <p className="py-2">
-                        <strong>E-mail Contato:</strong>{" "}
+                        <strong>E-mail de Contato:</strong>{" "}
                         {configuracaosistema.emailContato}
                     </p>
 
                     <p className="py-2">
-                        <strong>Tempo Minimo Agendamento Pedidos:</strong>{" "}
+                        <strong>Tempo Mínimo Agendamento Pedidos:</strong>{" "}
                         {configuracaosistema.tempoMinimoAgendamentoPedidos}
                     </p>
 
                     <p className="py-2">
-                        <strong>Data Entrada Sistema:</strong>{" "}
-                        {configuracaosistema.dataEntradaSistema}
+                        <strong>Aceite de Pedidos:</strong>{" "}
+                        {formatarAceite(configuracaosistema.ligarAceitePedidos)}
+                    </p>
+
+                    <p className="py-2">
+                        <strong>Data de Entrada no Sistema:</strong>{" "}
+                        {formatarData(configuracaosistema.dataEntradaSistema)}
                     </p>
 
                     <div className="modal-action">
