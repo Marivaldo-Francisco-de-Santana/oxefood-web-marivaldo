@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 import Breadcrumbs from "../../../shared/components/Breadcrumbs";
@@ -19,6 +20,8 @@ import {
 
 export default function ProdutoPage() {
 
+    const navigate = useNavigate();
+
     const [lista, setLista] = useState([]);
 
     const [produto, setProduto] = useState({
@@ -36,88 +39,60 @@ export default function ProdutoPage() {
 
         try {
 
-            const data = await listar(
-                MAPPING_CONTROLLER_PRODUTO
-            );
+            const data = await listar(MAPPING_CONTROLLER_PRODUTO);
 
-            console.log(
-                "PRODUTOS RECEBIDOS:",
-                data
-            );
+            console.log("PRODUTOS RECEBIDOS:", data);
 
             setLista(data);
 
         } catch (erro) {
 
-            console.error(
-                "ERRO AO CARREGAR PRODUTOS:",
-                erro
-            );
+            console.error("ERRO AO CARREGAR PRODUTOS:", erro);
 
-            toast.error(
-                "Erro ao carregar produtos."
-            );
+            toast.error("Erro ao carregar produtos.");
         }
     }
 
+    // abre o formulário para editar o produto
     function editar(id) {
-
-        console.log(
-            "Editar produto:",
-            id
-        );
+        navigate(`/produto-form/${id}`);
     }
 
     async function confirmarRemover(id) {
 
-        if (!confirm(
-            "Deseja realmente excluir este produto?"
-        )) {
+        if (!confirm("Deseja realmente excluir este produto?")) {
             return;
         }
 
         try {
 
-            await remover(
-                MAPPING_CONTROLLER_PRODUTO,
-                id
-            );
+            await remover(MAPPING_CONTROLLER_PRODUTO, id);
 
             await carregar();
 
-            toast.success(
-                "Produto removido com sucesso!"
-            );
+            toast.success("Produto removido com sucesso!");
 
         } catch (erro) {
 
             console.error(erro);
 
-            toast.error(
-                "Erro ao tentar remover o produto."
-            );
+            toast.error("Erro ao tentar remover o produto.");
         }
     }
 
     function formatarPreco(preco) {
 
-        return Number(preco).toLocaleString(
-            "pt-BR",
-            {
-                style: "currency",
-                currency: "BRL"
-            }
-        );
+        return Number(preco).toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL"
+        });
     }
 
     async function detalhar(id) {
 
         try {
 
-            const data = await buscarPorId(
-                MAPPING_CONTROLLER_PRODUTO,
-                id
-            );
+            const data = await buscarPorId(MAPPING_CONTROLLER_PRODUTO, id);
 
             setProduto({
                 id: data.id,
@@ -126,17 +101,13 @@ export default function ProdutoPage() {
                 preco: data.preco ?? ""
             });
 
-            document
-                .getElementById("modal-detalhar")
-                .showModal();
+            document.getElementById("modal-detalhar").showModal();
 
         } catch (erro) {
 
             console.error(erro);
 
-            toast.error(
-                "Erro ao carregar produto."
-            );
+            toast.error("Erro ao carregar produto.");
         }
     }
 
@@ -176,9 +147,7 @@ export default function ProdutoPage() {
                             Produtos
                         </h1>
 
-                        <NewButton
-                            destino="/produto-form"
-                        />
+                        <NewButton destino="/produto-form" />
 
                     </div>
 
@@ -186,20 +155,14 @@ export default function ProdutoPage() {
 
                     <div
                         className="overflow-x-auto"
-                        style={{
-                            marginTop: "30px"
-                        }}
+                        style={{ marginTop: "30px" }}
                     >
 
                         <table className="table table-zebra">
 
                             <thead>
 
-                                <tr
-                                    style={{
-                                        textAlign: "center"
-                                    }}
-                                >
+                                <tr style={{ textAlign: "center" }}>
 
                                     <th>Nome</th>
                                     <th>Descrição</th>
@@ -212,62 +175,28 @@ export default function ProdutoPage() {
 
                             <tbody>
 
-                                {lista.map((produto) => (
+                                {lista.map((item) => (
 
-                                    <tr key={produto.id}>
+                                    <tr key={item.id}>
 
-                                        <td
-                                            style={{
-                                                width: "30%"
-                                            }}
-                                        >
-                                            {produto.nome}
+                                        <td style={{ width: "30%" }}>
+                                            {item.nome}
                                         </td>
 
-                                        <td
-                                            style={{
-                                                width: "40%"
-                                            }}
-                                        >
-                                            {produto.descricao}
+                                        <td style={{ width: "40%" }}>
+                                            {item.descricao}
                                         </td>
 
-                                        <td
-                                            style={{
-                                                textAlign: "center"
-                                            }}
-                                        >
-                                            {formatarPreco(
-                                                produto.preco
-                                            )}
+                                        <td style={{ textAlign: "center" }}>
+                                            {formatarPreco(item.preco)}
                                         </td>
 
-                                        <td
-                                            style={{
-                                                textAlign: "center"
-                                            }}
-                                        >
+                                        <td style={{ textAlign: "center" }}>
 
                                             <CrudActions
-
-                                                onDetail={() =>
-                                                    detalhar(
-                                                        produto.id
-                                                    )
-                                                }
-
-                                                onEdit={() =>
-                                                    editar(
-                                                        produto.id
-                                                    )
-                                                }
-
-                                                onDelete={() =>
-                                                    confirmarRemover(
-                                                        produto.id
-                                                    )
-                                                }
-
+                                                onDetail={() => detalhar(item.id)}
+                                                onEdit={() => editar(item.id)}
+                                                onDelete={() => confirmarRemover(item.id)}
                                             />
 
                                         </td>
@@ -288,10 +217,7 @@ export default function ProdutoPage() {
 
             {/* MODAL DE DETALHES DO PRODUTO */}
 
-            <dialog
-                id="modal-detalhar"
-                className="modal"
-            >
+            <dialog id="modal-detalhar" className="modal">
 
                 <div className="modal-box">
 
@@ -302,18 +228,15 @@ export default function ProdutoPage() {
                     <div className="divider" />
 
                     <p className="py-4">
-                        <strong>Nome:</strong>{" "}
-                        {produto.nome}
+                        <strong>Nome:</strong> {produto.nome}
                     </p>
 
                     <p className="py-4">
-                        <strong>Descrição:</strong>{" "}
-                        {produto.descricao}
+                        <strong>Descrição:</strong> {produto.descricao}
                     </p>
 
                     <p className="py-4">
-                        <strong>Preço:</strong>{" "}
-                        {formatarPreco(produto.preco)}
+                        <strong>Preço:</strong> {formatarPreco(produto.preco)}
                     </p>
 
                     <div className="modal-action">
@@ -337,4 +260,3 @@ export default function ProdutoPage() {
         </div>
     );
 }
-

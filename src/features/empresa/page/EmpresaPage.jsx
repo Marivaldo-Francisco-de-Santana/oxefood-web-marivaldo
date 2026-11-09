@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 import Breadcrumbs from "../../../shared/components/Breadcrumbs";
@@ -18,6 +19,8 @@ import {
 } from "../service/empresaService";
 
 export default function EmpresaPage() {
+
+    const navigate = useNavigate();
 
     const [lista, setLista] = useState([]);
 
@@ -39,62 +42,42 @@ export default function EmpresaPage() {
 
         try {
 
-            const data = await listar(
-                MAPPING_CONTROLLER_EMPRESA
-            );
+            const data = await listar(MAPPING_CONTROLLER_EMPRESA);
 
-            console.log(
-                "EMPRESAS RECEBIDAS:",
-                data
-            );
+            console.log("EMPRESAS RECEBIDAS:", data);
 
             setLista(data);
 
         } catch (erro) {
 
-            console.error(
-                "ERRO AO CARREGAR EMPRESAS:",
-                erro
-            );
+            console.error("ERRO AO CARREGAR EMPRESAS:", erro);
         }
     }
 
+    // abre o formulário para editar a empresa
     function editar(id) {
-
-        console.log(
-            "Editar empresa:",
-            id
-        );
+        navigate(`/empresa-form/${id}`);
     }
 
     async function confirmarRemover(id) {
 
-        if (!confirm(
-            "Deseja realmente excluir esta empresa?"
-        )) {
+        if (!confirm("Deseja realmente excluir esta empresa?")) {
             return;
         }
 
         try {
 
-            await remover(
-                MAPPING_CONTROLLER_EMPRESA,
-                id
-            );
+            await remover(MAPPING_CONTROLLER_EMPRESA, id);
 
             await carregar();
 
-            toast.success(
-                "Empresa removida com sucesso!"
-            );
+            toast.success("Empresa removida com sucesso!");
 
         } catch (erro) {
 
             console.error(erro);
 
-            toast.error(
-                "Erro ao tentar remover a empresa."
-            );
+            toast.error("Erro ao tentar remover a empresa.");
         }
     }
 
@@ -102,10 +85,7 @@ export default function EmpresaPage() {
 
         try {
 
-            const data = await buscarPorId(
-                MAPPING_CONTROLLER_EMPRESA,
-                id
-            );
+            const data = await buscarPorId(MAPPING_CONTROLLER_EMPRESA, id);
 
             setEmpresa({
                 id: data.id,
@@ -117,17 +97,13 @@ export default function EmpresaPage() {
                 endereco: data.endereco ?? ""
             });
 
-            document
-                .getElementById("modal-detalhar")
-                .showModal();
+            document.getElementById("modal-detalhar").showModal();
 
         } catch (erro) {
 
             console.error(erro);
 
-            toast.error(
-                "Erro ao carregar empresa."
-            );
+            toast.error("Erro ao carregar empresa.");
         }
     }
 
@@ -167,9 +143,7 @@ export default function EmpresaPage() {
                             Empresas
                         </h1>
 
-                        <NewButton
-                            destino="/empresa-form"
-                        />
+                        <NewButton destino="/empresa-form" />
 
                     </div>
 
@@ -177,20 +151,14 @@ export default function EmpresaPage() {
 
                     <div
                         className="overflow-x-auto"
-                        style={{
-                            marginTop: "30px"
-                        }}
+                        style={{ marginTop: "30px" }}
                     >
 
                         <table className="table table-zebra">
 
                             <thead>
 
-                                <tr
-                                    style={{
-                                        textAlign: "center"
-                                    }}
-                                >
+                                <tr style={{ textAlign: "center" }}>
 
                                     <th>Razão Social</th>
                                     <th>Nome Fantasia</th>
@@ -206,60 +174,23 @@ export default function EmpresaPage() {
 
                             <tbody>
 
-                                {lista.map((empresa) => (
+                                {lista.map((item) => (
 
-                                    <tr key={empresa.id}>
+                                    <tr key={item.id}>
 
-                                        <td>
-                                            {empresa.razaoSocial}
-                                        </td>
+                                        <td>{item.razaoSocial}</td>
+                                        <td>{item.nomeFantasia}</td>
+                                        <td>{item.cnpj}</td>
+                                        <td>{item.email}</td>
+                                        <td>{item.telefone}</td>
+                                        <td>{item.endereco}</td>
 
-                                        <td>
-                                            {empresa.nomeFantasia}
-                                        </td>
-
-                                        <td>
-                                            {empresa.cnpj}
-                                        </td>
-
-                                        <td>
-                                            {empresa.email}
-                                        </td>
-
-                                        <td>
-                                            {empresa.telefone}
-                                        </td>
-
-                                        <td>
-                                            {empresa.endereco}
-                                        </td>
-
-                                        <td
-                                            style={{
-                                                textAlign: "center"
-                                            }}
-                                        >
+                                        <td style={{ textAlign: "center" }}>
 
                                             <CrudActions
-
-                                                onDetail={() =>
-                                                    detalhar(
-                                                        empresa.id
-                                                    )
-                                                }
-
-                                                onEdit={() =>
-                                                    editar(
-                                                        empresa.id
-                                                    )
-                                                }
-
-                                                onDelete={() =>
-                                                    confirmarRemover(
-                                                        empresa.id
-                                                    )
-                                                }
-
+                                                onDetail={() => detalhar(item.id)}
+                                                onEdit={() => editar(item.id)}
+                                                onDelete={() => confirmarRemover(item.id)}
                                             />
 
                                         </td>
@@ -280,10 +211,7 @@ export default function EmpresaPage() {
 
             {/* MODAL DE DETALHES DA EMPRESA */}
 
-            <dialog
-                id="modal-detalhar"
-                className="modal"
-            >
+            <dialog id="modal-detalhar" className="modal">
 
                 <div className="modal-box">
 
@@ -294,33 +222,27 @@ export default function EmpresaPage() {
                     <div className="divider" />
 
                     <p className="py-2">
-                        <strong>Razão Social:</strong>{" "}
-                        {empresa.razaoSocial}
+                        <strong>Razão Social:</strong> {empresa.razaoSocial}
                     </p>
 
                     <p className="py-2">
-                        <strong>Nome Fantasia:</strong>{" "}
-                        {empresa.nomeFantasia}
+                        <strong>Nome Fantasia:</strong> {empresa.nomeFantasia}
                     </p>
 
                     <p className="py-2">
-                        <strong>CNPJ:</strong>{" "}
-                        {empresa.cnpj}
+                        <strong>CNPJ:</strong> {empresa.cnpj}
                     </p>
 
                     <p className="py-2">
-                        <strong>E-mail:</strong>{" "}
-                        {empresa.email}
+                        <strong>E-mail:</strong> {empresa.email}
                     </p>
 
                     <p className="py-2">
-                        <strong>Telefone:</strong>{" "}
-                        {empresa.telefone}
+                        <strong>Telefone:</strong> {empresa.telefone}
                     </p>
 
                     <p className="py-2">
-                        <strong>Endereço:</strong>{" "}
-                        {empresa.endereco}
+                        <strong>Endereço:</strong> {empresa.endereco}
                     </p>
 
                     <div className="modal-action">
@@ -344,4 +266,3 @@ export default function EmpresaPage() {
         </div>
     );
 }
-

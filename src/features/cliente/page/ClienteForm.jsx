@@ -1,18 +1,29 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 
-import BackButton from "../../../shared/components/BackButton";
-import Breadcrumbs from "../../../shared/components/Breadcrumbs";
-import Footer from "../../../shared/components/Footer";
 import Menu from "../../../shared/components/Menu";
+import Footer from "../../../shared/components/Footer";
+import Breadcrumbs from "../../../shared/components/Breadcrumbs";
+import BackButton from "../../../shared/components/BackButton";
 import SaveButton from "../../../shared/components/SaveButton";
 
-import { cadastrar } from "../../../shared/services/crudService";
-import { MAPPING_CONTROLLER_CLIENTE } from "../../cliente/service/clienteService";
+import {
+    buscarPorId,
+    cadastrar,
+    atualizar
+} from "../../../shared/services/crudService";
+
+// Definida aqui para não depender do arquivo Mappings
+const MAPPING_CONTROLLER_CLIENTE = "/api/cliente";
 
 export default function ClienteForm() {
 
+    const { idCliente } = useParams();
+    const navigate = useNavigate();
+
     const [cliente, setCliente] = useState({
+        id: null,
         nome: "",
         cpf: "",
         foneCelular: "",
@@ -20,318 +31,182 @@ export default function ClienteForm() {
         dataNascimento: ""
     });
 
-    async function salvar() {
+    useEffect(() => {
+        if (idCliente) {
+            carregarCliente();
+        }
+    }, [idCliente]);
 
+    async function carregarCliente() {
         try {
-            console.log("ENVIANDO CLIENTE:", cliente);
-
-            const resposta = await cadastrar(
+            const data = await buscarPorId(
                 MAPPING_CONTROLLER_CLIENTE,
-                cliente
+                idCliente
             );
 
-            console.log("CLIENTE CADASTRADO:", resposta);
-
-            toast.success("Cliente cadastrado com sucesso!");
-
             setCliente({
-                nome: "",
-                cpf: "",
-                foneCelular: "",
-                foneFixo: "",
-                dataNascimento: ""
+                id: data.id,
+                nome: data.nome ?? "",
+                cpf: data.cpf ?? "",
+                foneCelular: data.foneCelular ?? "",
+                foneFixo: data.foneFixo ?? "",
+                dataNascimento: data.dataNascimento ?? ""
             });
 
         } catch (erro) {
+            console.error("Erro ao carregar cliente:", erro);
+            toast.error("Erro ao carregar cliente.");
+        }
+    }
 
-            console.error("ERRO AO CADASTRAR CLIENTE:", erro);
+    function atualizarCampo(event) {
+        const { name, value } = event.target;
 
-            if (erro.response) {
-                console.error("STATUS:", erro.response.status);
-                console.error("RESPOSTA:", erro.response.data);
+        setCliente({
+            ...cliente,
+            [name]: value
+        });
+    }
+
+    async function salvar() {
+        try {
+            const dados = {
+                ...cliente,
+                dataNascimento: cliente.dataNascimento || null
+            };
+
+            if (idCliente) {
+                // atualizar recebe apenas (mapping, objeto); o id vai dentro do objeto
+                await atualizar(
+                    MAPPING_CONTROLLER_CLIENTE,
+                    { ...dados, id: idCliente }
+                );
+
+                toast.success("Cliente atualizado com sucesso!");
+
+            } else {
+                await cadastrar(
+                    MAPPING_CONTROLLER_CLIENTE,
+                    dados
+                );
+
+                toast.success("Cliente cadastrado com sucesso!");
             }
 
-            toast.error("Erro ao cadastrar cliente.");
+            navigate("/cliente");
+
+        } catch (erro) {
+            console.error("Erro ao salvar cliente:", erro);
+            toast.error("Erro ao salvar cliente.");
         }
     }
 
     return (
-        <div>
-
+        <>
             <Menu />
 
-            <Breadcrumbs items={[
-                { label: "Cliente" },
-                { label: "Cadastrar" }
-            ]} />
+            <div className="container mx-auto mt-4 px-4">
 
-            <div
-                style={{
-                    marginTop: "40px",
-                    marginLeft: "10%",
-                    marginRight: "10%"
-                }}
-            >
+                {idCliente ? (
+                    <Breadcrumbs items={[
+                        { label: "Cliente" },
+                        { label: "Alterar" }
+                    ]} />
+                ) : (
+                    <Breadcrumbs items={[
+                        { label: "Cliente" },
+                        { label: "Cadastrar" }
+                    ]} />
+                )}
 
-                <div className="overflow-x-auto shadow-sm">
+                <h1 className="text-3xl font-bold text-gray-800">
+                    {idCliente ? "Alterar Cliente" : "Novo Cliente"}
+                </h1>
 
-                    <div
-                        className="flex items-center justify-between mb-6"
-                        style={{
-                            marginTop: "20px",
-                            marginLeft: "10px",
-                            marginRight: "10px"
-                        }}
-                    >
+                <div className="mt-4 rounded-lg bg-white p-6 shadow">
 
-                        <h1 className="text-3xl font-bold text-gray-800">
-                            Novo Cliente
-                        </h1>
+                    <div className="mb-4">
+                        <label className="mb-2 block font-medium">
+                            Nome
+                        </label>
 
+                        <input
+                            type="text"
+                            name="nome"
+                            value={cliente.nome}
+                            onChange={atualizarCampo}
+                            className="w-full rounded border p-2"
+                            required
+                        />
                     </div>
 
-                    <div className="divider divider-info" />
+                    <div className="mb-4">
+                        <label className="mb-2 block font-medium">
+                            CPF
+                        </label>
 
-                    <div
-                        className="overflow-x-auto"
-                        style={{ padding: "30px" }}
-                    >
+                        <input
+                            type="text"
+                            name="cpf"
+                            value={cliente.cpf}
+                            onChange={atualizarCampo}
+                            className="w-full rounded border p-2"
+                            required
+                        />
+                    </div>
 
-                        <form
-                            onSubmit={(e) => {
-                                e.preventDefault();
-                                salvar();
-                            }}
-                        >
+                    <div className="mb-4">
+                        <label className="mb-2 block font-medium">
+                            Telefone celular
+                        </label>
 
-                            {/* NOME E CPF */}
+                        <input
+                            type="text"
+                            name="foneCelular"
+                            value={cliente.foneCelular}
+                            onChange={atualizarCampo}
+                            className="w-full rounded border p-2"
+                        />
+                    </div>
 
-                            <div className="flex w-full">
+                    <div className="mb-4">
+                        <label className="mb-2 block font-medium">
+                            Telefone fixo
+                        </label>
 
-                                <div
-                                    className="card rounded-box grid grow p-8"
-                                    style={{ padding: "30px" }}
-                                >
+                        <input
+                            type="text"
+                            name="foneFixo"
+                            value={cliente.foneFixo}
+                            onChange={atualizarCampo}
+                            className="w-full rounded border p-2"
+                        />
+                    </div>
 
-                                    <fieldset className="fieldset w-full">
+                    <div className="mb-4">
+                        <label className="mb-2 block font-medium">
+                            Data de nascimento
+                        </label>
 
-                                        <label
-                                            className="fieldset-legend"
-                                            htmlFor="nome"
-                                        >
-                                            Nome
-                                        </label>
+                        <input
+                            type="date"
+                            name="dataNascimento"
+                            value={cliente.dataNascimento}
+                            onChange={atualizarCampo}
+                            className="w-full rounded border p-2"
+                        />
+                    </div>
 
-                                        <input
-                                            type="text"
-                                            id="nome"
-                                            className="input input-bordered w-full"
-                                            value={cliente.nome}
-                                            required
-                                            onChange={(e) =>
-                                                setCliente({
-                                                    ...cliente,
-                                                    nome: e.target.value
-                                                })
-                                            }
-                                        />
+                    <div className="flex gap-2">
+                        <BackButton destino="/cliente" />
 
-                                    </fieldset>
-
-                                </div>
-
-
-                                <div
-                                    className="card rounded-box grid grow p-8"
-                                    style={{ padding: "30px" }}
-                                >
-
-                                    <fieldset className="fieldset w-full">
-
-                                        <label
-                                            className="fieldset-legend"
-                                            htmlFor="cpf"
-                                        >
-                                            CPF
-                                        </label>
-
-                                        <input
-                                            type="text"
-                                            id="cpf"
-                                            placeholder="000.000.000-00"
-                                            className="input input-bordered w-full"
-                                            value={cliente.cpf}
-                                            required
-                                            onChange={(e) =>
-                                                setCliente({
-                                                    ...cliente,
-                                                    cpf: e.target.value
-                                                })
-                                            }
-                                        />
-
-                                    </fieldset>
-
-                                </div>
-
-                            </div>
-
-
-                            {/* TELEFONES E DATA */}
-
-                            <div className="flex w-full">
-
-                                <div
-                                    className="card rounded-box grid grow p-8"
-                                    style={{ padding: "30px" }}
-                                >
-
-                                    <fieldset className="fieldset w-full">
-
-                                        <label
-                                            className="fieldset-legend"
-                                            htmlFor="foneCelular"
-                                        >
-                                            Fone Celular
-                                        </label>
-
-                                        <input
-                                            type="text"
-                                            id="foneCelular"
-                                            placeholder="(81) 9 8888-7777"
-                                            className="input input-bordered w-full"
-                                            value={cliente.foneCelular}
-                                            required
-                                            onChange={(e) =>
-                                                setCliente({
-                                                    ...cliente,
-                                                    foneCelular: e.target.value
-                                                })
-                                            }
-                                        />
-
-                                    </fieldset>
-
-                                </div>
-
-
-                                <div
-                                    className="card rounded-box grid grow p-8"
-                                    style={{ padding: "30px" }}
-                                >
-
-                                    <fieldset className="fieldset w-full">
-
-                                        <label
-                                            className="fieldset-legend"
-                                            htmlFor="foneFixo"
-                                        >
-                                            Fone Fixo
-                                        </label>
-
-                                        <input
-                                            type="text"
-                                            id="foneFixo"
-                                            placeholder="(81) 3333-4444"
-                                            className="input input-bordered w-full"
-                                            value={cliente.foneFixo}
-                                            onChange={(e) =>
-                                                setCliente({
-                                                    ...cliente,
-                                                    foneFixo: e.target.value
-                                                })
-                                            }
-                                        />
-
-                                    </fieldset>
-
-                                </div>
-
-
-                                <div
-                                    className="card rounded-box grid grow p-8"
-                                    style={{ padding: "30px" }}
-                                >
-
-                                    <fieldset className="fieldset w-full">
-
-                                        <label
-                                            className="fieldset-legend"
-                                            htmlFor="dataNascimento"
-                                        >
-                                            Data de Nascimento
-                                        </label>
-
-                                        <input
-                                            type="date"
-                                            id="dataNascimento"
-                                            className="input input-bordered w-full"
-                                            value={cliente.dataNascimento}
-                                            required
-                                            onChange={(e) =>
-                                                setCliente({
-                                                    ...cliente,
-                                                    dataNascimento: e.target.value
-                                                })
-                                            }
-                                        />
-
-                                    </fieldset>
-
-                                </div>
-
-                            </div>
-
-
-                            {/* BOTÕES */}
-
-                            <div className="flex w-full">
-
-                                <div
-                                    className="card rounded-box grid grow p-8"
-                                    style={{ padding: "30px" }}
-                                >
-
-                                    <div
-                                        style={{
-                                            marginTop: "50px",
-                                            textAlign: "left"
-                                        }}
-                                    >
-                                        <BackButton destino="/cliente" />
-                                    </div>
-
-                                </div>
-
-
-                                <div
-                                    className="card rounded-box grid grow p-8"
-                                    style={{ padding: "30px" }}
-                                >
-
-                                    <div
-                                        style={{
-                                            marginTop: "50px",
-                                            textAlign: "right"
-                                        }}
-                                    >
-                                        <SaveButton save={salvar} />
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-                        </form>
-
+                        <SaveButton save={salvar} />
                     </div>
 
                 </div>
-
             </div>
 
             <Footer />
-
-        </div>
+        </>
     );
 }

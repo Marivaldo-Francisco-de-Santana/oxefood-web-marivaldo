@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 
 import BackButton from "../../../shared/components/BackButton";
@@ -7,18 +8,74 @@ import Footer from "../../../shared/components/Footer";
 import Menu from "../../../shared/components/Menu";
 import SaveButton from "../../../shared/components/SaveButton";
 
-import { cadastrar } from "../../../shared/services/crudService";
-import { MAPPING_CONTROLLER_PRODUTO_CADASTRO } from "../service/produtoService";
+import {
+    atualizar,
+    buscarPorId,
+    cadastrar
+} from "../../../shared/services/crudService";
+
+import {
+    MAPPING_CONTROLLER_PRODUTO,
+    MAPPING_CONTROLLER_PRODUTO_CADASTRO
+} from "../service/produtoService";
 
 export default function ProdutoForm() {
 
+    const { idProduto } = useParams();
+    const navigate = useNavigate();
+
     const [produto, setProduto] = useState({
+        id: null,
         nome: "",
         descricao: "",
         preco: ""
     });
 
+    // evita envio duplicado (onSubmit + clique no SaveButton)
+    const salvando = useRef(false);
+
+    useEffect(() => {
+        if (idProduto) {
+            carregarProduto();
+        }
+    }, [idProduto]);
+
+    async function carregarProduto() {
+        try {
+            const data = await buscarPorId(
+                MAPPING_CONTROLLER_PRODUTO,
+                idProduto
+            );
+
+            setProduto({
+                id: data.id,
+                nome: data.nome ?? "",
+                descricao: data.descricao ?? "",
+                preco: data.preco ?? ""
+            });
+
+        } catch (erro) {
+            console.error("Erro ao carregar produto:", erro);
+            toast.error("Erro ao carregar produto.");
+        }
+    }
+
+    function atualizarCampo(event) {
+        const { name, value } = event.target;
+
+        setProduto((anterior) => ({
+            ...anterior,
+            [name]: value
+        }));
+    }
+
     async function salvar() {
+
+        if (salvando.current) {
+            return;
+        }
+
+        salvando.current = true;
 
         try {
 
@@ -28,55 +85,44 @@ export default function ProdutoForm() {
                 preco: Number(produto.preco)
             };
 
-            console.log(
-                "ENVIANDO PRODUTO:",
-                produtoParaSalvar
-            );
+            console.log("ENVIANDO PRODUTO:", produtoParaSalvar);
 
-            const resposta = await cadastrar(
-                MAPPING_CONTROLLER_PRODUTO_CADASTRO,
-                produtoParaSalvar
-            );
+            if (idProduto) {
 
-            console.log(
-                "PRODUTO CADASTRADO:",
-                resposta
-            );
+                await atualizar(
+                    MAPPING_CONTROLLER_PRODUTO,
+                    { ...produtoParaSalvar, id: idProduto }
+                );
 
-            toast.success(
-                "Produto cadastrado com sucesso!"
-            );
+                toast.success("Produto atualizado com sucesso!");
 
-            setProduto({
-                nome: "",
-                descricao: "",
-                preco: ""
-            });
+            } else {
+
+                const resposta = await cadastrar(
+                    MAPPING_CONTROLLER_PRODUTO_CADASTRO,
+                    produtoParaSalvar
+                );
+
+                console.log("PRODUTO CADASTRADO:", resposta);
+
+                toast.success("Produto cadastrado com sucesso!");
+            }
+
+            navigate("/produto");
 
         } catch (erro) {
 
-            console.error(
-                "ERRO AO CADASTRAR PRODUTO:",
-                erro
-            );
+            console.error("ERRO AO SALVAR PRODUTO:", erro);
 
             if (erro.response) {
-
-                console.error(
-                    "STATUS:",
-                    erro.response.status
-                );
-
-                console.error(
-                    "RESPOSTA DO SERVIDOR:",
-                    erro.response.data
-                );
-
+                console.error("STATUS:", erro.response.status);
+                console.error("RESPOSTA DO SERVIDOR:", erro.response.data);
             }
 
-            toast.error(
-                "Erro ao cadastrar produto."
-            );
+            toast.error("Erro ao salvar produto.");
+
+        } finally {
+            salvando.current = false;
         }
     }
 
@@ -89,7 +135,7 @@ export default function ProdutoForm() {
             <Breadcrumbs
                 items={[
                     { label: "Produto" },
-                    { label: "Cadastrar" }
+                    { label: idProduto ? "Alterar" : "Cadastrar" }
                 ]}
             />
 
@@ -113,7 +159,7 @@ export default function ProdutoForm() {
                     >
 
                         <h1 className="text-3xl font-bold text-gray-800">
-                            Novo Produto
+                            {idProduto ? "Alterar Produto" : "Novo Produto"}
                         </h1>
 
                     </div>
@@ -122,9 +168,7 @@ export default function ProdutoForm() {
 
                     <div
                         className="overflow-x-auto"
-                        style={{
-                            padding: "30px"
-                        }}
+                        style={{ padding: "30px" }}
                     >
 
                         <form
@@ -140,9 +184,7 @@ export default function ProdutoForm() {
 
                                 <div
                                     className="card rounded-box grid grow p-8"
-                                    style={{
-                                        padding: "30px"
-                                    }}
+                                    style={{ padding: "30px" }}
                                 >
 
                                     <fieldset className="fieldset w-full">
@@ -157,15 +199,11 @@ export default function ProdutoForm() {
                                         <input
                                             type="text"
                                             id="nome"
+                                            name="nome"
                                             className="input input-bordered w-full"
                                             value={produto.nome}
                                             required
-                                            onChange={(e) =>
-                                                setProduto({
-                                                    ...produto,
-                                                    nome: e.target.value
-                                                })
-                                            }
+                                            onChange={atualizarCampo}
                                         />
 
                                     </fieldset>
@@ -180,9 +218,7 @@ export default function ProdutoForm() {
 
                                 <div
                                     className="card rounded-box grid grow p-8"
-                                    style={{
-                                        padding: "30px"
-                                    }}
+                                    style={{ padding: "30px" }}
                                 >
 
                                     <fieldset className="fieldset w-full">
@@ -196,16 +232,12 @@ export default function ProdutoForm() {
 
                                         <textarea
                                             id="descricao"
+                                            name="descricao"
                                             className="textarea textarea-bordered w-full"
                                             rows="5"
                                             value={produto.descricao}
                                             required
-                                            onChange={(e) =>
-                                                setProduto({
-                                                    ...produto,
-                                                    descricao: e.target.value
-                                                })
-                                            }
+                                            onChange={atualizarCampo}
                                         />
 
                                     </fieldset>
@@ -220,9 +252,7 @@ export default function ProdutoForm() {
 
                                 <div
                                     className="card rounded-box grid grow p-8"
-                                    style={{
-                                        padding: "30px"
-                                    }}
+                                    style={{ padding: "30px" }}
                                 >
 
                                     <fieldset className="fieldset w-full">
@@ -237,17 +267,13 @@ export default function ProdutoForm() {
                                         <input
                                             type="number"
                                             id="preco"
+                                            name="preco"
                                             className="input input-bordered w-full"
                                             step="0.01"
                                             min="0"
                                             value={produto.preco}
                                             required
-                                            onChange={(e) =>
-                                                setProduto({
-                                                    ...produto,
-                                                    preco: e.target.value
-                                                })
-                                            }
+                                            onChange={atualizarCampo}
                                         />
 
                                     </fieldset>
@@ -262,44 +288,22 @@ export default function ProdutoForm() {
 
                                 <div
                                     className="card rounded-box grid grow p-8"
-                                    style={{
-                                        padding: "30px"
-                                    }}
+                                    style={{ padding: "30px" }}
                                 >
 
-                                    <div
-                                        style={{
-                                            marginTop: "50px",
-                                            textAlign: "left"
-                                        }}
-                                    >
-
-                                        <BackButton
-                                            destino="/produto"
-                                        />
-
+                                    <div style={{ marginTop: "50px", textAlign: "left" }}>
+                                        <BackButton destino="/produto" />
                                     </div>
 
                                 </div>
 
                                 <div
                                     className="card rounded-box grid grow p-8"
-                                    style={{
-                                        padding: "30px"
-                                    }}
+                                    style={{ padding: "30px" }}
                                 >
 
-                                    <div
-                                        style={{
-                                            marginTop: "50px",
-                                            textAlign: "right"
-                                        }}
-                                    >
-
-                                        <SaveButton
-                                            save={salvar}
-                                        />
-
+                                    <div style={{ marginTop: "50px", textAlign: "right" }}>
+                                        <SaveButton save={salvar} />
                                     </div>
 
                                 </div>

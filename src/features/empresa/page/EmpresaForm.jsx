@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 
 import BackButton from "../../../shared/components/BackButton";
@@ -7,76 +8,164 @@ import Footer from "../../../shared/components/Footer";
 import Menu from "../../../shared/components/Menu";
 import SaveButton from "../../../shared/components/SaveButton";
 
-import { cadastrar } from "../../../shared/services/crudService";
+import {
+    atualizar,
+    buscarPorId,
+    cadastrar
+} from "../../../shared/services/crudService";
+
 import { MAPPING_CONTROLLER_EMPRESA_CADASTRO } from "../service/empresaService";
+
+// ATENÇÃO: confirme no @RequestMapping do controller de empresa.
+// Usada para buscar por id (GET /{id}) e atualizar (PUT).
+const MAPPING_CONTROLLER_EMPRESA = "/api/empresa";
+
+const EMPRESA_VAZIA = {
+    id: null,
+    razaoSocial: "",
+    nomeFantasia: "",
+    cnpj: "",
+    email: "",
+    telefone: "",
+    endereco: ""
+};
 
 export default function EmpresaForm() {
 
-    const [empresa, setEmpresa] = useState({
-        razaoSocial: "",
-        nomeFantasia: "",
-        cnpj: "",
-        email: "",
-        telefone: "",
-        endereco: ""
-    });
+    const { idEmpresa } = useParams();
+    const navigate = useNavigate();
 
-    async function salvar() {
+    const [empresa, setEmpresa] = useState(EMPRESA_VAZIA);
 
+    // evita envio duplicado (onSubmit + clique no SaveButton)
+    const salvando = useRef(false);
+
+    useEffect(() => {
+        if (idEmpresa) {
+            carregarEmpresa();
+        }
+    }, [idEmpresa]);
+
+    async function carregarEmpresa() {
         try {
-
-            console.log(
-                "ENVIANDO EMPRESA:",
-                empresa
-            );
-
-            const resposta = await cadastrar(
-                MAPPING_CONTROLLER_EMPRESA_CADASTRO,
-                empresa
-            );
-
-            console.log(
-                "EMPRESA CADASTRADA:",
-                resposta
-            );
-
-            toast.success(
-                "Empresa cadastrada com sucesso!"
+            const data = await buscarPorId(
+                MAPPING_CONTROLLER_EMPRESA,
+                idEmpresa
             );
 
             setEmpresa({
-                razaoSocial: "",
-                nomeFantasia: "",
-                cnpj: "",
-                email: "",
-                telefone: "",
-                endereco: ""
+                id: data.id,
+                razaoSocial: data.razaoSocial ?? "",
+                nomeFantasia: data.nomeFantasia ?? "",
+                cnpj: data.cnpj ?? "",
+                email: data.email ?? "",
+                telefone: data.telefone ?? "",
+                endereco: data.endereco ?? ""
             });
 
         } catch (erro) {
+            console.error("Erro ao carregar empresa:", erro);
+            toast.error("Erro ao carregar empresa.");
+        }
+    }
 
-            console.error(
-                "ERRO AO CADASTRAR EMPRESA:",
-                erro
-            );
+    function atualizarCampo(event) {
+        const { name, value } = event.target;
 
-            if (erro.response) {
+        setEmpresa((anterior) => ({
+            ...anterior,
+            [name]: value
+        }));
+    }
 
-                console.error(
-                    "STATUS:",
-                    erro.response.status
+    async function salvar() {
+
+        if (salvando.current) {
+            return;
+        }
+
+        salvando.current = true;
+
+        try {
+
+            console.log("ENVIANDO EMPRESA:", empresa);
+
+            if (idEmpresa) {
+
+                await atualizar(
+                    MAPPING_CONTROLLER_EMPRESA,
+                    { ...empresa, id: idEmpresa }
                 );
 
-                console.error(
-                    "RESPOSTA:",
-                    erro.response.data
+                toast.success("Empresa atualizada com sucesso!");
+
+            } else {
+
+                const resposta = await cadastrar(
+                    MAPPING_CONTROLLER_EMPRESA_CADASTRO,
+                    empresa
                 );
+
+                console.log("EMPRESA CADASTRADA:", resposta);
+
+                toast.success("Empresa cadastrada com sucesso!");
             }
 
-            toast.error(
-                "Erro ao cadastrar empresa."
-            );
+            navigate("/empresa");
+
+        } catch (erro) {
+
+            console.error("ERRO AO SALVAR EMPRESA:", erro);
+
+            if (erro.response) {
+                console.error("STATUS:", erro.response.status);
+                console.error("RESPOSTA:", erro.response.data);
+            }
+
+            toast.error("Erro ao salvar empresa.");
+
+        } finally {
+            salvando.current = false;
         }
+    }
+
+    // Cada campo: [nome, rótulo, tipo, obrigatório, placeholder]
+    const campos = [
+        ["razaoSocial", "Razão Social", "text", true, ""],
+        ["nomeFantasia", "Nome Fantasia", "text", true, ""],
+        ["cnpj", "CNPJ", "text", true, "00.000.000/0000-00"],
+        ["email", "E-mail", "email", true, "empresa@email.com"],
+        ["telefone", "Telefone", "text", false, "(81) 3333-4444"],
+        ["endereco", "Endereço", "text", true, ""]
+    ];
+
+    function renderCampo([nome, rotulo, tipo, obrigatorio, placeholder]) {
+        return (
+            <div
+                key={nome}
+                className="card rounded-box grid grow p-8"
+                style={{ padding: "30px" }}
+            >
+                <fieldset className="fieldset w-full">
+
+                    <label className="fieldset-legend" htmlFor={nome}>
+                        {rotulo}
+                    </label>
+
+                    <input
+                        type={tipo}
+                        id={nome}
+                        name={nome}
+                        placeholder={placeholder}
+                        className="input input-bordered w-full"
+                        value={empresa[nome]}
+                        required={obrigatorio}
+                        onChange={atualizarCampo}
+                    />
+
+                </fieldset>
+            </div>
+        );
     }
 
     return (
@@ -87,7 +176,7 @@ export default function EmpresaForm() {
             <Breadcrumbs
                 items={[
                     { label: "Empresa" },
-                    { label: "Cadastrar" }
+                    { label: idEmpresa ? "Alterar" : "Cadastrar" }
                 ]}
             />
 
@@ -111,7 +200,7 @@ export default function EmpresaForm() {
                     >
 
                         <h1 className="text-3xl font-bold text-gray-800">
-                            Nova Empresa
+                            {idEmpresa ? "Alterar Empresa" : "Nova Empresa"}
                         </h1>
 
                     </div>
@@ -125,303 +214,52 @@ export default function EmpresaForm() {
 
                         <form
                             onSubmit={(e) => {
-
                                 e.preventDefault();
-
                                 salvar();
-
                             }}
                         >
 
-                            {/* RAZÃO SOCIAL */}
-
+                            {/* Razão Social */}
                             <div className="flex w-full">
-
-                                <div
-                                    className="card rounded-box grid grow p-8"
-                                    style={{
-                                        padding: "30px"
-                                    }}
-                                >
-
-                                    <fieldset className="fieldset w-full">
-
-                                        <label
-                                            className="fieldset-legend"
-                                            htmlFor="razaoSocial"
-                                        >
-                                            Razão Social
-                                        </label>
-
-                                        <input
-                                            type="text"
-                                            id="razaoSocial"
-                                            className="input input-bordered w-full"
-                                            value={empresa.razaoSocial}
-                                            required
-                                            onChange={(e) =>
-                                                setEmpresa({
-                                                    ...empresa,
-                                                    razaoSocial:
-                                                        e.target.value
-                                                })
-                                            }
-                                        />
-
-                                    </fieldset>
-
-                                </div>
-
+                                {renderCampo(campos[0])}
                             </div>
 
-
-                            {/* NOME FANTASIA */}
-
+                            {/* Nome Fantasia */}
                             <div className="flex w-full">
-
-                                <div
-                                    className="card rounded-box grid grow p-8"
-                                    style={{
-                                        padding: "30px"
-                                    }}
-                                >
-
-                                    <fieldset className="fieldset w-full">
-
-                                        <label
-                                            className="fieldset-legend"
-                                            htmlFor="nomeFantasia"
-                                        >
-                                            Nome Fantasia
-                                        </label>
-
-                                        <input
-                                            type="text"
-                                            id="nomeFantasia"
-                                            className="input input-bordered w-full"
-                                            value={empresa.nomeFantasia}
-                                            required
-                                            onChange={(e) =>
-                                                setEmpresa({
-                                                    ...empresa,
-                                                    nomeFantasia:
-                                                        e.target.value
-                                                })
-                                            }
-                                        />
-
-                                    </fieldset>
-
-                                </div>
-
+                                {renderCampo(campos[1])}
                             </div>
 
-
-                            {/* CNPJ + EMAIL */}
-
+                            {/* CNPJ + E-mail */}
                             <div className="flex w-full">
-
-                                <div
-                                    className="card rounded-box grid grow p-8"
-                                    style={{
-                                        padding: "30px"
-                                    }}
-                                >
-
-                                    <fieldset className="fieldset w-full">
-
-                                        <label
-                                            className="fieldset-legend"
-                                            htmlFor="cnpj"
-                                        >
-                                            CNPJ
-                                        </label>
-
-                                        <input
-                                            type="text"
-                                            id="cnpj"
-                                            placeholder="00.000.000/0000-00"
-                                            className="input input-bordered w-full"
-                                            value={empresa.cnpj}
-                                            required
-                                            onChange={(e) =>
-                                                setEmpresa({
-                                                    ...empresa,
-                                                    cnpj:
-                                                        e.target.value
-                                                })
-                                            }
-                                        />
-
-                                    </fieldset>
-
-                                </div>
-
-
-                                <div
-                                    className="card rounded-box grid grow p-8"
-                                    style={{
-                                        padding: "30px"
-                                    }}
-                                >
-
-                                    <fieldset className="fieldset w-full">
-
-                                        <label
-                                            className="fieldset-legend"
-                                            htmlFor="email"
-                                        >
-                                            E-mail
-                                        </label>
-
-                                        <input
-                                            type="email"
-                                            id="email"
-                                            placeholder="empresa@email.com"
-                                            className="input input-bordered w-full"
-                                            value={empresa.email}
-                                            required
-                                            onChange={(e) =>
-                                                setEmpresa({
-                                                    ...empresa,
-                                                    email:
-                                                        e.target.value
-                                                })
-                                            }
-                                        />
-
-                                    </fieldset>
-
-                                </div>
-
+                                {renderCampo(campos[2])}
+                                {renderCampo(campos[3])}
                             </div>
 
-
-                            {/* TELEFONE + ENDEREÇO */}
-
+                            {/* Telefone + Endereço */}
                             <div className="flex w-full">
-
-                                <div
-                                    className="card rounded-box grid grow p-8"
-                                    style={{
-                                        padding: "30px"
-                                    }}
-                                >
-
-                                    <fieldset className="fieldset w-full">
-
-                                        <label
-                                            className="fieldset-legend"
-                                            htmlFor="telefone"
-                                        >
-                                            Telefone
-                                        </label>
-
-                                        <input
-                                            type="text"
-                                            id="telefone"
-                                            placeholder="(81) 3333-4444"
-                                            className="input input-bordered w-full"
-                                            value={empresa.telefone}
-                                            onChange={(e) =>
-                                                setEmpresa({
-                                                    ...empresa,
-                                                    telefone:
-                                                        e.target.value
-                                                })
-                                            }
-                                        />
-
-                                    </fieldset>
-
-                                </div>
-
-
-                                <div
-                                    className="card rounded-box grid grow p-8"
-                                    style={{
-                                        padding: "30px"
-                                    }}
-                                >
-
-                                    <fieldset className="fieldset w-full">
-
-                                        <label
-                                            className="fieldset-legend"
-                                            htmlFor="endereco"
-                                        >
-                                            Endereço
-                                        </label>
-
-                                        <input
-                                            type="text"
-                                            id="endereco"
-                                            className="input input-bordered w-full"
-                                            value={empresa.endereco}
-                                            required
-                                            onChange={(e) =>
-                                                setEmpresa({
-                                                    ...empresa,
-                                                    endereco:
-                                                        e.target.value
-                                                })
-                                            }
-                                        />
-
-                                    </fieldset>
-
-                                </div>
-
+                                {renderCampo(campos[4])}
+                                {renderCampo(campos[5])}
                             </div>
 
-
-                            {/* BOTÕES */}
-
+                            {/* Botões */}
                             <div className="flex w-full">
 
                                 <div
                                     className="card rounded-box grid grow p-8"
-                                    style={{
-                                        padding: "30px"
-                                    }}
+                                    style={{ padding: "30px" }}
                                 >
-
-                                    <div
-                                        style={{
-                                            marginTop: "50px",
-                                            textAlign: "left"
-                                        }}
-                                    >
-
-                                        <BackButton
-                                            destino="/empresa"
-                                        />
-
+                                    <div style={{ marginTop: "50px", textAlign: "left" }}>
+                                        <BackButton destino="/empresa" />
                                     </div>
-
                                 </div>
-
 
                                 <div
                                     className="card rounded-box grid grow p-8"
-                                    style={{
-                                        padding: "30px"
-                                    }}
+                                    style={{ padding: "30px" }}
                                 >
-
-                                    <div
-                                        style={{
-                                            marginTop: "50px",
-                                            textAlign: "right"
-                                        }}
-                                    >
-
-                                        <SaveButton
-                                            save={salvar}
-                                        />
-
+                                    <div style={{ marginTop: "50px", textAlign: "right" }}>
+                                        <SaveButton save={salvar} />
                                     </div>
-
                                 </div>
 
                             </div>
