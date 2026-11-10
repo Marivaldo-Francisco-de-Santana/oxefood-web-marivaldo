@@ -1,325 +1,230 @@
-import { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { toast } from "react-toastify";
-
+import { useState } from "react";
+import { toast } from 'react-toastify';
 import BackButton from "../../../shared/components/BackButton";
 import Breadcrumbs from "../../../shared/components/Breadcrumbs";
 import Footer from "../../../shared/components/Footer";
 import Menu from "../../../shared/components/Menu";
 import SaveButton from "../../../shared/components/SaveButton";
-
-import {
-    atualizar,
-    buscarPorId,
-    cadastrar
-} from "../../../shared/services/crudService";
-
-import {
-    MAPPING_CONTROLLER_PRODUTO,
-    MAPPING_CONTROLLER_PRODUTO_CADASTRO
-} from "../service/produtoService";
+import { cadastrar } from "../../../shared/services/crudService";
+import { MAPPING_CONTROLLER_PRODUTO } from "../../produto/service/produtoService";
 
 export default function ProdutoForm() {
-
     const { idProduto } = useParams();
-    const navigate = useNavigate();
+    const [listaCategoria, setListaCategoria] = useState([]);
+
 
     const [produto, setProduto] = useState({
-        id: null,
-        nome: "",
+        id: "",
+        codigo: "",
+        titulo: "",
         descricao: "",
-        preco: ""
+        valorUnitario: "",
+        tempoEntregaMinimo: "",
+        tempoEntregaMaximo: ""
     });
-
-    // evita envio duplicado (onSubmit + clique no SaveButton)
-    const salvando = useRef(false);
-
-    useEffect(() => {
-        if (idProduto) {
-            carregarProduto();
-        }
-    }, [idProduto]);
-
-    async function carregarProduto() {
-        try {
-            const data = await buscarPorId(
-                MAPPING_CONTROLLER_PRODUTO,
-                idProduto
-            );
-
-            setProduto({
-                id: data.id,
-                nome: data.nome ?? "",
-                descricao: data.descricao ?? "",
-                preco: data.preco ?? ""
-            });
-
-        } catch (erro) {
-            console.error("Erro ao carregar produto:", erro);
-            toast.error("Erro ao carregar produto.");
-        }
-    }
-
-    function atualizarCampo(event) {
-        const { name, value } = event.target;
-
-        setProduto((anterior) => ({
-            ...anterior,
-            [name]: value
-        }));
-    }
 
     async function salvar() {
 
-        if (salvando.current) {
-            return;
-        }
-
-        salvando.current = true;
-
         try {
-
-            const produtoParaSalvar = {
-                nome: produto.nome,
-                descricao: produto.descricao,
-                preco: Number(produto.preco)
-            };
-
-            console.log("ENVIANDO PRODUTO:", produtoParaSalvar);
-
-            if (idProduto) {
-
-                await atualizar(
-                    MAPPING_CONTROLLER_PRODUTO,
-                    { ...produtoParaSalvar, id: idProduto }
-                );
-
-                toast.success("Produto atualizado com sucesso!");
-
-            } else {
-
-                const resposta = await cadastrar(
-                    MAPPING_CONTROLLER_PRODUTO_CADASTRO,
-                    produtoParaSalvar
-                );
-
-                console.log("PRODUTO CADASTRADO:", resposta);
-
-                toast.success("Produto cadastrado com sucesso!");
-            }
-
-            navigate("/produto");
-
+            await cadastrar(MAPPING_CONTROLLER_PRODUTO, produto);
+            toast.success("Produto cadastrado com sucesso!");
         } catch (erro) {
-
-            console.error("ERRO AO SALVAR PRODUTO:", erro);
-
-            if (erro.response) {
-                console.error("STATUS:", erro.response.status);
-                console.error("RESPOSTA DO SERVIDOR:", erro.response.data);
-            }
-
-            toast.error("Erro ao salvar produto.");
-
-        } finally {
-            salvando.current = false;
+            toast.error("Erro ao cadastrar Produto.");
         }
     }
 
     return (
 
         <div>
-
             <Menu />
 
-            <Breadcrumbs
-                items={[
-                    { label: "Produto" },
-                    { label: idProduto ? "Alterar" : "Cadastrar" }
-                ]}
-            />
-
-            <div
-                style={{
-                    marginTop: "40px",
-                    marginLeft: "10%",
-                    marginRight: "10%"
-                }}
-            >
+            <Breadcrumbs items={[
+                { label: "Produto" },
+                { label: "Cadastrar" }
+            ]} />
+            <div style={{ marginTop: '40px', marginLeft: '10%', marginRight: '10%' }}>
 
                 <div className="overflow-x-auto shadow-sm">
 
-                    <div
-                        className="flex items-center justify-between mb-6"
-                        style={{
-                            marginTop: "20px",
-                            marginLeft: "10px",
-                            marginRight: "10px"
-                        }}
-                    >
+                    <div className="flex items-center justify-between mb-6" style={{ marginTop: '20px', marginLeft: '10px', marginRight: '10px' }}>
 
                         <h1 className="text-3xl font-bold text-gray-800">
-                            {idProduto ? "Alterar Produto" : "Novo Produto"}
+                            Novo Produto
                         </h1>
 
                     </div>
 
                     <div className="divider divider-info" />
 
-                    <div
-                        className="overflow-x-auto"
-                        style={{ padding: "30px" }}
-                    >
+                    <div className="overflow-x-auto" style={{ padding: '30px' }}>
+                        <form>
 
-                        <form
-                            onSubmit={(e) => {
-                                e.preventDefault();
-                                salvar();
-                            }}
-                        >
-
-                            {/* NOME */}
-
-                            <div className="flex w-full">
-
-                                <div
-                                    className="card rounded-box grid grow p-8"
-                                    style={{ padding: "30px" }}
-                                >
+                            <div className="flex w-full" >
+                                <div className="card rounded-box grid grow p-8" style={{ padding: '30px' }}>
 
                                     <fieldset className="fieldset w-full">
-
-                                        <label
-                                            className="fieldset-legend"
-                                            htmlFor="nome"
-                                        >
-                                            Nome
-                                        </label>
-
+                                        <label className="fieldset-legend" htmlFor="id">id</label>
                                         <input
                                             type="text"
-                                            id="nome"
-                                            name="nome"
+                                            id="id"
                                             className="input input-bordered w-full"
-                                            value={produto.nome}
-                                            required
-                                            onChange={atualizarCampo}
+                                            value={produto.id}
+                                            onChange={(e) =>
+                                                setProduto({ ...produto, id: e.target.value })
+                                            }
                                         />
+                                    </fieldset>
 
+                                </div>
+                                <div className="card rounded-box grid grow p-8" style={{ padding: '30px' }}>
+
+                                    <fieldset className="fieldset w-full">
+                                        <label className="fieldset-legend" htmlFor="codigo">Codigo</label>
+                                        <input
+                                            type="text"
+                                            value={produto.codigo}
+                                            onAccept={(value) =>
+                                                setProduto({ ...produto, codigo: value })
+                                            }
+                                            className="input input-bordered w-full"
+                                            id="codigo"
+                                        />
+                                    </fieldset>
+
+                                </div>
+                            </div>
+
+                            <div className="flex w-full" >
+                                <div className="card rounded-box grid grow p-8" style={{ padding: '30px' }}>
+
+                                    <fieldset className="fieldset w-full">
+                                        <label className="fieldset-legend" htmlFor="foneCelular">Titulo</label>
+                                        <input
+                                            type="text"
+                                            value={produto.titulo}
+                                            onAccept={(value) =>
+                                                setProduto({ ...produto, titulo: value })
+                                            }
+                                            className="input input-bordered w-full"
+                                            id="titulo"
+                                        />
                                     </fieldset>
 
                                 </div>
 
-                            </div>
 
-                            {/* DESCRIÇÃO */}
+                                <div className="card rounded-box grid grow p-8" style={{ padding: '30px' }}>
 
-                            <div className="flex w-full">
+                                    <fieldset className="fieldset">
+                                        <legend className="fieldset-legend">Categoria</legend>
+                                        <select
+                                            className="select  w-full"
+                                            value={produto.idCategoria}
+                                            onChange={(e) =>
+                                                setProduto({ ...produto, idCategoria: e.target.value })
+                                            }
+                                        >
+                                            <option value="">Selecione ...</option>
+                                            {listaCategoria.map((categoria, index) => (
+                                                <option key={index} value={categoria.id}>
+                                                    {categoria.descricao}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </fieldset>
 
-                                <div
-                                    className="card rounded-box grid grow p-8"
-                                    style={{ padding: "30px" }}
-                                >
 
                                     <fieldset className="fieldset w-full">
-
-                                        <label
-                                            className="fieldset-legend"
-                                            htmlFor="descricao"
-                                        >
-                                            Descrição
-                                        </label>
-
-                                        <textarea
-                                            id="descricao"
-                                            name="descricao"
-                                            className="textarea textarea-bordered w-full"
-                                            rows="5"
+                                        <label className="fieldset-legend" htmlFor="descricao">Descricao</label>
+                                        <input
+                                            type="text"
                                             value={produto.descricao}
-                                            required
-                                            onChange={atualizarCampo}
+                                            onAccept={(value) =>
+                                                setProduto({ ...produto, descricao: value })
+                                            }
+                                            className="input input-bordered w-full"
+                                            id="descricao"
                                         />
-
                                     </fieldset>
 
                                 </div>
-
-                            </div>
-
-                            {/* PREÇO */}
-
-                            <div className="flex w-full">
-
-                                <div
-                                    className="card rounded-box grid grow p-8"
-                                    style={{ padding: "30px" }}
-                                >
+                                <div className="card rounded-box grid grow p-8" style={{ padding: '30px' }}>
 
                                     <fieldset className="fieldset w-full">
-
-                                        <label
-                                            className="fieldset-legend"
-                                            htmlFor="preco"
-                                        >
-                                            Preço
-                                        </label>
-
+                                        <legend className="fieldset-legend" htmlFor="valorUnitario">Valor unitario</legend>
                                         <input
                                             type="number"
-                                            id="preco"
-                                            name="preco"
+                                            id="valorUnitario"
                                             className="input input-bordered w-full"
-                                            step="0.01"
-                                            min="0"
-                                            value={produto.preco}
-                                            required
-                                            onChange={atualizarCampo}
+                                            value={produto.valorUnitario}
+                                            onChange={(e) =>
+                                                setProduto({ ...produto, valorUnitario: e.target.value })
+                                            }
                                         />
-
                                     </fieldset>
 
                                 </div>
+                                <div className="card rounded-box grid grow p-8" style={{ padding: '30px' }}>
 
+                                    <fieldset className="fieldset w-full">
+                                        <legend className="fieldset-legend" htmlFor="valorUnitario">Tempo entrega maximo</legend>
+                                        <input
+                                            type="number"
+                                            id="Tempo entrega maximo"
+                                            className="input input-bordered w-full"
+                                            value={produto.tempoEntregaMaximo}
+                                            onChange={(e) =>
+                                                setProduto({ ...produto, tempoEntregaMaximo: e.target.value })
+                                            }
+                                        />
+                                    </fieldset>
+
+                                </div>
+                                <div className="card rounded-box grid grow p-8" style={{ padding: '30px' }}>
+
+                                    <fieldset className="fieldset w-full">
+                                        <legend className="fieldset-legend" htmlFor="valorUnitario">Tempo Entrega Minimo</legend>
+                                        <input
+                                            type="number"
+                                            id="tempoEntregaMinimo"
+                                            className="input input-bordered w-full"
+                                            value={produto.tempoEntregaMinimo}
+                                            onChange={(e) =>
+                                                setProduto({ ...produto, tempoEntregaMinimo: e.target.value })
+                                            }
+                                        />
+                                    </fieldset>
+
+                                </div>
                             </div>
+                            <div className="flex w-full" >
+                                <div className="card rounded-box grid grow p-8" style={{ padding: '30px' }}>
 
-                            {/* BOTÕES */}
-
-                            <div className="flex w-full">
-
-                                <div
-                                    className="card rounded-box grid grow p-8"
-                                    style={{ padding: "30px" }}
-                                >
-
-                                    <div style={{ marginTop: "50px", textAlign: "left" }}>
-                                        <BackButton destino="/produto" />
+                                    <div style={{ marginTop: '50px', textAlign: 'left' }}>
+                                        <BackButton destino="/cliente" />
                                     </div>
 
                                 </div>
+                                <div className="card rounded-box grid grow p-8" style={{ padding: '30px' }}>
 
-                                <div
-                                    className="card rounded-box grid grow p-8"
-                                    style={{ padding: "30px" }}
-                                >
-
-                                    <div style={{ marginTop: "50px", textAlign: "right" }}>
-                                        <SaveButton save={salvar} />
+                                    <div style={{ marginTop: '50px', textAlign: 'right' }}>
+                                        <SaveButton save={() => salvar()} />
                                     </div>
 
                                 </div>
-
                             </div>
 
                         </form>
-
                     </div>
-
                 </div>
-
             </div>
 
             <Footer />
 
         </div>
+
     );
 }
+
+
+
